@@ -21,8 +21,9 @@ import base64
 # Setup
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 upbit = pyupbit.Upbit(os.getenv("UPBIT_ACCESS_KEY"), os.getenv("UPBIT_SECRET_KEY"))
+db_path = 'trading_decisions.sqlite'
 
-def initialize_db(db_path='trading_decisions.sqlite'):
+def initialize_db(db_path):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute('''
@@ -38,6 +39,20 @@ def initialize_db(db_path='trading_decisions.sqlite'):
                 btc_krw_price REAL
             );
         ''')
+        
+        # balance 테이블 생성
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS balance (
+                currency TEXT PRIMARY KEY,
+                balance REAL,
+                avg_buy_price REAL
+            );
+        ''')
+
+        # 초기 KRW 및 BTC 잔액 설정
+        cursor.execute("INSERT OR IGNORE INTO balance (currency, balance, avg_buy_price) VALUES ('KRW', 1000000, 0)") # 100만원 
+        cursor.execute("INSERT OR IGNORE INTO balance (currency, balance, avg_buy_price) VALUES ('BTC', 0, 0)")
+        
         conn.commit()
 
 def save_decision_to_db(decision, current_status):
@@ -68,7 +83,7 @@ def save_decision_to_db(decision, current_status):
     
         conn.commit()
 
-def fetch_last_decisions(db_path='trading_decisions.sqlite', num_decisions=10):
+def fetch_last_decisions(db_path, num_decisions=10):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute('''
@@ -100,22 +115,45 @@ def fetch_last_decisions(db_path='trading_decisions.sqlite', num_decisions=10):
             return "No decisions found."
 
 def get_current_status():
-    # orderbook = pyupbit.get_orderbook(ticker="KRW-BTC")
-    # current_time = orderbook['timestamp']
-    # btc_balance = 0
-    # krw_balance = 0
-    # btc_avg_buy_price = 0
-    # balances = upbit.get_balances()
-    # for b in balances:
-    #     if b['currency'] == "BTC":
-    #         btc_balance = b['balance']
-    #         btc_avg_buy_price = b['avg_buy_price']
-    #     if b['currency'] == "KRW":
-    #         krw_balance = b['balance']
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # 초기 변수 설정
+    btc_balance = 0
+    krw_balance = 0
+    btc_avg_buy_price = 0
 
-    # current_status = {'current_time': current_time, 'orderbook': orderbook, 'btc_balance': btc_balance, 'krw_balance': krw_balance, 'btc_avg_buy_price': btc_avg_buy_price}
-    # return json.dumps(current_status)
+    try:
+        # balance 테이블에서 최신 잔액 및 평균 매수 단가 조회
+        cursor.execute("SELECT balance, avg_buy_price FROM balance WHERE currency = 'BTC'")
+        btc_data = cursor.fetchone()
+        if btc_data:
+            btc_balance, btc_avg_buy_price = btc_data
 
+        cursor.execute("SELECT balance FROM balance WHERE currency = 'KRW'")
+        krw_data = cursor.fetchone()
+        if krw_data:
+            krw_balance = krw_data[0]
+
+        # 현재 BTC-KRW 가격 조회
+        orderbook = pyupbit.get_orderbook(ticker="KRW-BTC")
+        btc_krw_price = orderbook['orderbook_units'][0]["ask_price"]
+        current_time = datetime.fromtimestamp(orderbook['timestamp'] / 1000).strftime('%Y-%m-%d %H:%M:%S')
+
+    except Exception as e:
+        print(f"Failed to get current status: {e}")
+        return None
+    finally:
+        conn.close()
+
+    current_status = {
+        'current_time': current_time,
+        'btc_balance': btc_balance,
+        'krw_balance': krw_balance,
+        'btc_avg_buy_price': btc_avg_buy_price,
+        'btc_krw_price': btc_krw_price
+    }
+    return json.dumps(current_status, ensure_ascii=False)
 
 def fetch_and_prepare_data():
     # Fetch data
@@ -307,32 +345,97 @@ def analyze_data_with_gpt4(news_data, data_json, last_decisions, fear_and_greed,
         print(f"Error in analyzing data with GPT-4: {e}")
         return None
 
-def execute_buy(percentage):
+def execute_buy(percentage, reason="Auto trade"):
     print("Attempting to buy BTC with a percentage of KRW balance...")
-    # try:
-    #     krw_balance = upbit.get_balance("KRW")
-    #     amount_to_invest = krw_balance * (percentage / 100)
-    #     if amount_to_invest > 5000:  # Ensure the order is above the minimum threshold
-    #         result = upbit.buy_market_order("KRW-BTC", amount_to_invest * 0.9995)  # Adjust for fees
-    #         print("Buy order successful:", result)
-    # except Exception as e:
-    #     print(f"Failed to execute buy order: {e}")
 
-def execute_sell(percentage):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT balance FROM balance WHERE currency = 'KRW'")
+        krw_balance_data = cursor.fetchone()
+        if krw_balance_data:
+            krw_balance = krw_balance_data[0]
+            amount_to_invest = krw_balance * (percentage / 100)
+
+            if amount_to_invest > 5000:
+                current_price = pyupbit.get_orderbook(ticker="KRW-BTC")['orderbook_units'][0]["ask_price"]
+                btc_to_buy = (amount_to_invest * 0.9995) / current_price
+
+                # 잔액 업데이트
+                new_krw_balance = krw_balance - amount_to_invest
+                cursor.execute("UPDATE balance SET balance = ? WHERE currency = 'KRW'", (new_krw_balance,))
+
+                cursor.execute("SELECT balance FROM balance WHERE currency = 'BTC'")
+                btc_balance_data = cursor.fetchone()
+                if btc_balance_data:
+                    new_btc_balance = btc_balance_data[0] + btc_to_buy
+                    cursor.execute("UPDATE balance SET balance = ?, avg_buy_price = ? WHERE currency = 'BTC'", (new_btc_balance, current_price))
+                else:
+                    cursor.execute("INSERT INTO balance (currency, balance, avg_buy_price) VALUES ('BTC', ?, ?)", (btc_to_buy, current_price))
+
+                # 매수 기록 추가
+                cursor.execute('''
+                    INSERT INTO decisions (timestamp, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price)
+                    VALUES (?, 'BUY', ?, ?, ?, ?, ?, ?)
+                ''', (datetime.now(), percentage, reason, new_btc_balance, new_krw_balance, btc_to_buy, current_price))
+
+                conn.commit()
+                print("Buy order successful:", btc_to_buy)
+            else:
+                print("Insufficient funds for buy order.")
+    except Exception as e:
+        print(f"Failed to execute buy order: {e}")
+    finally:
+        conn.close()
+
+def execute_sell(percentage, reason="Auto trade"):
     print("Attempting to sell a percentage of BTC...")
-    # try:
-    #     btc_balance = upbit.get_balance("BTC")
-    #     amount_to_sell = btc_balance * (percentage / 100)
-    #     current_price = pyupbit.get_orderbook(ticker="KRW-BTC")['orderbook_units'][0]["ask_price"]
-    #     if current_price * amount_to_sell > 5000:  # Ensure the order is above the minimum threshold
-    #         result = upbit.sell_market_order("KRW-BTC", amount_to_sell)
-    #         print("Sell order successful:", result)
-    # except Exception as e:
-    #     print(f"Failed to execute sell order: {e}")
+
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT balance FROM balance WHERE currency = 'BTC'")
+        btc_balance_data = cursor.fetchone()
+        if btc_balance_data:
+            btc_balance = btc_balance_data[0]
+            amount_to_sell = btc_balance * (percentage / 100)
+
+            current_price = pyupbit.get_orderbook(ticker="KRW-BTC")['orderbook_units'][0]["ask_price"]
+
+            if current_price * amount_to_sell > 5000:
+                krw_earned = amount_to_sell * current_price * 0.9995
+
+                # 잔액 업데이트
+                new_btc_balance = btc_balance - amount_to_sell
+                cursor.execute("UPDATE balance SET balance = ? WHERE currency = 'BTC'", (new_btc_balance,))
+
+                cursor.execute("SELECT balance FROM balance WHERE currency = 'KRW'")
+                krw_balance_data = cursor.fetchone()
+                if krw_balance_data:
+                    new_krw_balance = krw_balance_data[0] + krw_earned
+                    cursor.execute("UPDATE balance SET balance = ? WHERE currency = 'KRW'", (new_krw_balance,))
+                else:
+                    cursor.execute("INSERT INTO balance (currency, balance) VALUES ('KRW', ?)", (krw_earned,))
+
+                # 매도 기록 추가
+                cursor.execute('''
+                    INSERT INTO decisions (timestamp, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price)
+                    VALUES (?, 'SELL', ?, ?, ?, ?, ?, ?)
+                ''', (datetime.now(), percentage, reason, new_btc_balance, new_krw_balance, amount_to_sell, current_price))
+
+                conn.commit()
+                print("Sell order successful:", amount_to_sell)
+            else:
+                print("Insufficient BTC for sell order.")
+    except Exception as e:
+        print(f"Failed to execute sell order: {e}")
+    finally:
+        conn.close()
 
 def make_decision_and_execute():
     print("Making decision and executing...")
     try:
+        # 데이터 수집
         news_data = get_news_data()
         data_json = fetch_and_prepare_data()
         last_decisions = fetch_last_decisions()
@@ -340,34 +443,46 @@ def make_decision_and_execute():
         current_status = get_current_status()
         current_base64_image = get_current_base64_image()
     except Exception as e:
+        # 데이터 수집에 실패했을 경우 에러 출력
         print(f"Error: {e}")
     else:
-        max_retries = 5
-        retry_delay_seconds = 5
-        decision = None
+        max_retries = 5  # 최대 재시도 횟수
+        retry_delay_seconds = 5  # 재시도 간격 (초)
+        decision = None  # 결정 변수 초기화
         for attempt in range(max_retries):
             try:
+                # GPT-4로 데이터를 분석하여 매수 또는 매도 결정 생성
                 advice = analyze_data_with_gpt4(news_data, data_json, last_decisions, fear_and_greed, current_status, current_base64_image)
-                decision = json.loads(advice)
-                break
+                decision = json.loads(advice)  # 결정 데이터를 JSON 형식으로 파싱
+                break  # 결정이 성공적으로 생성되면 루프 종료
             except Exception as e:
+                # 파싱 실패 시 재시도
                 print(f"JSON parsing failed: {e}. Retrying in {retry_delay_seconds} seconds...")
                 time.sleep(retry_delay_seconds)
                 print(f"Attempt {attempt + 2} of {max_retries}")
+        
         if not decision:
+            # 최대 재시도 횟수를 초과해도 결정을 내리지 못한 경우
             print("Failed to make a decision after maximum retries.")
             return
         else:
             try:
+                # 결정 실행
+                # 결정 데이터에서 비율(percentage)을 가져오며, 기본값은 100%
                 percentage = decision.get('percentage', 100)
 
+                # 결정이 "buy"인 경우 매수 실행
                 if decision.get('decision') == "buy":
                     execute_buy(percentage)
+                # 결정이 "sell"인 경우 매도 실행
                 elif decision.get('decision') == "sell":
                     execute_sell(percentage)
                 
+                # 결정 저장
+                # 최종 결정 및 현재 상태를 데이터베이스에 저장
                 save_decision_to_db(decision, current_status)
             except Exception as e:
+                # 실행 또는 저장 중 오류가 발생한 경우
                 print(f"Failed to execute the decision or save to DB: {e}")
 
 if __name__ == "__main__":
