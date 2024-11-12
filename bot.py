@@ -20,10 +20,15 @@ import base64
 
 # Setup
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# client = AzureOpenAI(
+#     api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+#     api_version="2024-08-01-preview",
+#     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
+# )
 upbit = pyupbit.Upbit(os.getenv("UPBIT_ACCESS_KEY"), os.getenv("UPBIT_SECRET_KEY"))
 db_path = 'trading_decisions.sqlite'
 
-def initialize_db(db_path):
+def initialize_db():
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute('''
@@ -83,7 +88,7 @@ def save_decision_to_db(decision, current_status):
     
         conn.commit()
 
-def fetch_last_decisions(db_path, num_decisions=10):
+def fetch_last_decisions(num_decisions=10):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute('''
@@ -253,10 +258,12 @@ def fetch_fear_and_greed_index(limit=1, date_format=''):
         resStr += str(data)
     return resStr
 
+import traceback
+
 def get_current_base64_image():
     screenshot_path = "screenshot.png"
+    driver = None
     try:
-        # Set up Chrome options for headless mode
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
@@ -264,49 +271,35 @@ def get_current_base64_image():
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--window-size=1920x1080")
 
-        service = Service('/usr/local/bin/chromedriver')  # Specify the path to the ChromeDriver executable
-
-        # Initialize the WebDriver with the specified options
+        # ChromeDriver 경로 지정
+        service = Service('/usr/bin/chromedriver')
         driver = webdriver.Chrome(service=service, options=chrome_options)
 
-        # Navigate to the desired webpage
+        # 페이지로 이동
         driver.get("https://upbit.com/full_chart?code=CRIX.UPBIT.KRW-BTC")
 
-        # Wait for the page to load completely
-        wait = WebDriverWait(driver, 10)  # 10 seconds timeout
-
-        # Wait for the first menu item to be clickable and click it
+        # 페이지 로드 대기 및 작업 수행
+        wait = WebDriverWait(driver, 10)
         first_menu_item = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='fullChartiq']/div/div/div[1]/div/div/cq-menu[1]")))
         first_menu_item.click()
 
-        # Wait for the "1 Hour" option to be clickable and click it
         one_hour_option = wait.until(EC.element_to_be_clickable((By.XPATH, "//cq-item[@stxtap=\"Layout.setPeriodicity(1,60,'minute')\"]")))
         one_hour_option.click()
 
-        # Wait for the indicators menu item to be clickable and click it
-        indicators_menu_item = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='fullChartiq']/div/div/div[1]/div/div/cq-menu[3]")))
-        indicators_menu_item.click()
-
-        # Wait for the indicators container to be present
-        indicators_container = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "cq-scroll.ps-container")))
-
-        # Scroll the container to make the "MACD" indicator visible
-        driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight / 2.5", indicators_container)
-
-        # Wait for the "MACD" indicator to be clickable and click it
-        macd_indicator = wait.until(EC.element_to_be_clickable((By.XPATH, "//cq-item[translate[@original='MACD']]")))
-        macd_indicator.click()
-
-        # Take a screenshot to verify the actions
+        # 스크린샷 저장
         driver.save_screenshot(screenshot_path)
     except Exception as e:
-        print(f"Error making current image: {e}")
-        return ""
+        print("Error making current image:")
+        traceback.print_exc()  # 상세 오류 메시지 출력
     finally:
-        # Close the browser
-        driver.quit()
-        with open(screenshot_path, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode('utf-8')
+        if driver:
+            driver.quit()
+        if os.path.exists(screenshot_path):
+            with open(screenshot_path, "rb") as image_file:
+                return base64.b64encode(image_file.read()).decode('utf-8')
+        else:
+            return ""
+
 
 def get_instructions(file_path):
     try:
@@ -345,7 +338,7 @@ def analyze_data_with_gpt4(news_data, data_json, last_decisions, fear_and_greed,
         print(f"Error in analyzing data with GPT-4: {e}")
         return None
 
-def execute_buy(percentage, reason="Auto trade"):
+def execute_buy(percentage, reason):
     print("Attempting to buy BTC with a percentage of KRW balance...")
 
     conn = sqlite3.connect(db_path)
@@ -388,7 +381,7 @@ def execute_buy(percentage, reason="Auto trade"):
     finally:
         conn.close()
 
-def execute_sell(percentage, reason="Auto trade"):
+def execute_sell(percentage, reason):
     print("Attempting to sell a percentage of BTC...")
 
     conn = sqlite3.connect(db_path)
@@ -473,10 +466,10 @@ def make_decision_and_execute():
 
                 # 결정이 "buy"인 경우 매수 실행
                 if decision.get('decision') == "buy":
-                    execute_buy(percentage)
+                    execute_buy(percentage,decision.get('reason', 'No reason provided'))
                 # 결정이 "sell"인 경우 매도 실행
                 elif decision.get('decision') == "sell":
-                    execute_sell(percentage)
+                    execute_sell(percentage,decision.get('reason', 'No reason provided'))
                 
                 # 결정 저장
                 # 최종 결정 및 현재 상태를 데이터베이스에 저장
@@ -489,8 +482,7 @@ if __name__ == "__main__":
     initialize_db()
     # testing
     # schedule.every().minute.do(make_decision_and_execute)
-
-
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    make_decision_and_execute()
+    #while True:
+    #    schedule.run_pending()
+    #    time.sleep(1)
