@@ -5,7 +5,8 @@ import SignInModal from '../../components/modal/signInModal';
 import './header.css';
 
 const Header = () => {
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+//   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <header className="header">
@@ -20,7 +21,8 @@ const Header = () => {
             <Link to="/rank" className="nav-item"><Award size={20} /><span>Rank</span></Link>
             <Link to="/profile" className="nav-item"><User size={20} /><span>Profile</span></Link>
             <button 
-              onClick={() => setIsLoginModalOpen(true)}
+            //   onClick={() => setIsLoginModalOpen(true)}
+                onClick={() => setIsModalOpen(true)}
               className="login-button"
             >
               Login
@@ -29,7 +31,9 @@ const Header = () => {
         </div>
       </nav>
       
-      <SignInModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+      {/* <SignInModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} /> */}
+      <SignInModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
     </header>
   );
 };
