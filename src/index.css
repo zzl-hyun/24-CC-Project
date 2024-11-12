@@ -12,3 +12,6 @@ code {
     monospace;
 }
 
+div {
+  border: #282c34 solid 1px;
+}

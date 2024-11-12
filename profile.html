@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프로필 설정</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .profile-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 500px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .form-group input, 
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .save-btn {
+            background-color: #4CAF50;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .save-btn:hover {
+            background-color: #45a049;
+        }
+
+        .delete-btn {
+            background-color: #fff;
+            color: #ff4444;
+            border: 1px solid #ff4444;
+        }
+
+        .delete-btn:hover {
+            background-color: #ff4444;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <h1>프로필 설정</h1>
+        <form id="profileForm">
+            <div class="form-group">
+                <label for="name">이름</label>
+                <input type="text" id="name" name="name" placeholder="이름을 입력하세요">
+            </div>
+
+            <div class="form-group">
+                <label for="status">상태메시지</label>
+                <textarea id="status" name="status" placeholder="상태메시지를 입력하세요"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="currentPassword">현재 비밀번호</label>
+                <input type="password" id="currentPassword" name="currentPassword">
+            </div>
+
+            <div class="form-group">
+                <label for="newPassword">새 비밀번호</label>
+                <input type="password" id="newPassword" name="newPassword">
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">새 비밀번호 확인</label>
+                <input type="password" id="confirmPassword" name="confirmPassword">
+            </div>
+
+            <button type="submit" class="save-btn">저장하기</button>
+            <button type="button" class="delete-btn">계정 탈퇴</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // 여기에 저장 로직 추가
+            alert('프로필이 저장되었습니다.');
+        });
+
+        document.querySelector('.delete-btn').addEventListener('click', function() {
+            if (confirm('정말로 계정을 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                // 여기에 탈퇴 로직 추가
+                alert('계정이 삭제되었습니다.');
+            }
+        });
+    </script>
+</body>
+</html>

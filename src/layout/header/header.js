@@ -16,12 +16,16 @@ class Header extends Component {
                 <div className='header-left'>
                     <div className='logo'>
                         <Link to="/">
-                            <span id='logo-text' style={{ fontSize: '24px', fontWeight: 'bold' }}>  trade bot  </span>
+                            <span id='logo-text' style={{ fontSize: '24px', fontWeight: 'bold' }}>  Trading Bot  </span>
                             {/* <FontAwesomeIcon icon={faTicket} style={{ height: '100%', color: '#E50914' }} /> */}
                         </Link>
                     </div>
               
-                        <nav className='nav-links'>
+
+                
+                </div>
+                <div className='header-right'>
+                <nav className='nav-links'>
                             <ul>
                                 <li><Link to="/"><FontAwesomeIcon icon={faHome} />
                                 Home</Link></li>
@@ -36,13 +40,11 @@ class Header extends Component {
                                 Profile</Link></li>
                             </ul>
                         </nav>
-                
-                </div>
-                <div className='header-right'>
                     <button className="login-button" id='login-button'>
                         login
                         {/* <FontAwesomeIcon icon={faRightFromBracket} /> */}
                     </button>
+                    
                 </div>
             </header>
         </div>
