@@ -101,8 +101,13 @@ def fetch_last_decisions(num_decisions=10):
         if decisions:
             formatted_decisions = []
             for decision in decisions:
-                # Converting timestamp to milliseconds since the Unix epoch
-                ts = datetime.strptime(decision[0], "%Y-%m-%d %H:%M:%S")
+                # 소수점 이하 초가 있는 경우와 없는 경우 모두 처리
+                timestamp_str = decision[0]
+                try:
+                    ts = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S.%f")
+                except ValueError:
+                    ts = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
+                
                 ts_millis = int(ts.timestamp() * 1000)
                 
                 formatted_decision = {
@@ -118,6 +123,8 @@ def fetch_last_decisions(num_decisions=10):
             return "\n".join(formatted_decisions)
         else:
             return "No decisions found."
+
+
 
 def get_current_status():
     conn = sqlite3.connect(db_path)
@@ -366,12 +373,6 @@ def execute_buy(percentage, reason):
                 else:
                     cursor.execute("INSERT INTO balance (currency, balance, avg_buy_price) VALUES ('BTC', ?, ?)", (btc_to_buy, current_price))
 
-                # 매수 기록 추가
-                cursor.execute('''
-                    INSERT INTO decisions (timestamp, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price)
-                    VALUES (?, 'BUY', ?, ?, ?, ?, ?, ?)
-                ''', (datetime.now(), percentage, reason, new_btc_balance, new_krw_balance, btc_to_buy, current_price))
-
                 conn.commit()
                 print("Buy order successful:", btc_to_buy)
             else:
@@ -409,12 +410,6 @@ def execute_sell(percentage, reason):
                     cursor.execute("UPDATE balance SET balance = ? WHERE currency = 'KRW'", (new_krw_balance,))
                 else:
                     cursor.execute("INSERT INTO balance (currency, balance) VALUES ('KRW', ?)", (krw_earned,))
-
-                # 매도 기록 추가
-                cursor.execute('''
-                    INSERT INTO decisions (timestamp, decision, percentage, reason, btc_balance, krw_balance, btc_avg_buy_price, btc_krw_price)
-                    VALUES (?, 'SELL', ?, ?, ?, ?, ?, ?)
-                ''', (datetime.now(), percentage, reason, new_btc_balance, new_krw_balance, amount_to_sell, current_price))
 
                 conn.commit()
                 print("Sell order successful:", amount_to_sell)
