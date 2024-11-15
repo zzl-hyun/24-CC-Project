@@ -1,7 +1,7 @@
 import React from "react";
 // import './history.css';
 
-const History = () => {
+const History = ({data}) => {
     return (
         <div className='history'>
             <h1>history</h1>

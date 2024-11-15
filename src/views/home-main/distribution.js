@@ -1,7 +1,7 @@
 import React from "react";
 // import './distribution.css';
 
-const Distribution = () => {
+const Distribution = ({data}) => {
     return (
         <div className='distribution'>
             <h1>Distribution</h1>
