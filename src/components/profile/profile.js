@@ -18,6 +18,7 @@ import {
 import {
   AccountBalanceWallet,
   TrendingUp,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
@@ -73,6 +74,14 @@ const Profile = () => {
     alert('상태 메시지가 변경되었습니다.');
   };
 
+  const getInitials = (name) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <Container maxWidth="md" sx={{ mt: 5 }}>
@@ -81,9 +90,15 @@ const Profile = () => {
             <Grid item xs={12} md={4}>
               <Avatar
                 alt={name}
-                src="/path/to/default-profile.png"
-                sx={{ width: 150, height: 150, mx: 'auto' }}
-              />
+                sx={{
+                  width: 150,
+                  height: 150,
+                  mx: 'auto',
+                  bgcolor: '#1976d2',
+                }}
+              >
+                <PersonIcon sx={{ fontSize: 80 }} />
+              </Avatar>
             </Grid>
             <Grid item xs={12} md={8}>
               <Typography variant="h4" gutterBottom>
