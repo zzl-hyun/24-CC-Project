@@ -1,0 +1,22 @@
+
+.trade {
+    display: flex;
+    justify-content: space-between; /* Add space between chart and order sections */
+}
+
+/* Clear floats to prevent layout issues */
+.trade::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+.chart-section{
+    float: left;
+    width: 75%;
+
+}
+.order-section{
+    float: right;
+    width: 25%;
+
+}
