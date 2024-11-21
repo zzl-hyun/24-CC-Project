@@ -1,5 +1,5 @@
 import React from 'react';
-import Chart from '../../views/trade/chart';
+import Chart from '../../views/trade/trade-chart';
 import Order from '../../views/trade/order';
 import './trade.css';
 const Trade = () => {
