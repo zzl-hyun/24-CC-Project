@@ -72,10 +72,10 @@ app.post('/login', (req, res) => {
   });
 });
 
-// 유저 정보 불러오기 API
+// 유저 정보 가져오기 API (id 기반, user_id 포함)
 app.get('/user/:id', (req, res) => {
-  const { id } = req.params;
-  const sql = `SELECT id, username, krw_balance, btc_balance, bio FROM users WHERE id = ?`;
+  const { id } = req.params; // TEXT 기반 id
+  const sql = `SELECT user_id, id, krw_balance, btc_balance, bio FROM users WHERE id = ?`;
   db.get(sql, [id], (err, row) => {
     if (err) {
       res.status(500).json({ error: 'Internal server error.' });
@@ -87,9 +87,9 @@ app.get('/user/:id', (req, res) => {
   });
 });
 
-// 전체 유저 정보 불러오기 API
+// 전체 유저 정보 가져오기 API (id, user_id 포함)
 app.get('/users', (req, res) => {
-  const sql = `SELECT id, username, krw_balance, btc_balance, bio FROM users`;
+  const sql = `SELECT user_id, id, krw_balance, btc_balance, bio FROM users`;
   db.all(sql, [], (err, rows) => {
     if (err) {
       res.status(500).json({ error: 'Internal server error.' });
@@ -98,6 +98,7 @@ app.get('/users', (req, res) => {
     }
   });
 });
+
 
 // 구매/판매 API
 app.post('/trade', async (req, res) => {
