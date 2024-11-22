@@ -4,7 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
-
+.db
 # testing
 /coverage
 
@@ -25,4 +25,3 @@ yarn-debug.log*
 yarn-error.log*
 screenshot.png
 trading_decisions.sqlite
-backend/database.db

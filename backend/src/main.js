@@ -2,13 +2,13 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bodyParser = require('body-parser');
 const axios = require('axios');
-const cors = require('cors'); // CORS 임포트
+const cors = require('cors'); // Import the cors package
 
 const app = express();
 const PORT = 4000;
 const DB_PATH = 'database.db';
 
-// CORS 미들웨어 추가
+// Enable CORS for all routes
 app.use(cors());
 
 // 데이터베이스 연결
@@ -24,8 +24,8 @@ app.use(bodyParser.json());
 const createTables = () => {
   const createUsersTable = `
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
+      user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id TEXT UNIQUE NOT NULL, -- 유저 고유 id 추가
       password TEXT NOT NULL,
       krw_balance REAL DEFAULT 0.0,
       btc_balance REAL DEFAULT 0.0,
@@ -39,7 +39,7 @@ const createTables = () => {
       type TEXT NOT NULL CHECK(type IN ('buy', 'sell')),
       amount REAL NOT NULL,
       timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
     );
   `;
   db.run(createUsersTable);
@@ -50,11 +50,11 @@ createTables();
 
 // 회원가입 API
 app.post('/register', (req, res) => {
-  const { username, password, bio } = req.body;
-  const sql = `INSERT INTO users (username, password, bio) VALUES (?, ?, ?)`;
-  db.run(sql, [username, password, bio || ''], function (err) {
+  const { id, password, bio } = req.body;
+  const sql = `INSERT INTO users (id, password, bio) VALUES (?, ?, ?)`;
+  db.run(sql, [id, password, bio || ''], function (err) {
     if (err) {
-      res.status(400).json({ error: 'Username already exists or invalid data.' });
+      res.status(400).json({ error: 'ID already exists or invalid data.' });
     } else {
       res.status(201).json({ message: 'User registered successfully!', userId: this.lastID });
     }
@@ -63,23 +63,23 @@ app.post('/register', (req, res) => {
 
 // 로그인 API
 app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  const sql = `SELECT * FROM users WHERE username = ? AND password = ?`;
-  db.get(sql, [username, password], (err, row) => {
+  const { id, password } = req.body;
+  const sql = `SELECT * FROM users WHERE id = ? AND password = ?`;
+  db.get(sql, [id, password], (err, row) => {
     if (err) {
       res.status(500).json({ error: 'Internal server error.' });
     } else if (row) {
       res.status(200).json({ message: 'Login successful!', user: row });
     } else {
-      res.status(400).json({ error: 'Invalid username or password.' });
+      res.status(400).json({ error: 'Invalid ID or password.' });
     }
   });
 });
 
-// 유저 정보 불러오기 API
+// 유저 정보 가져오기 API (id 기반, user_id 포함)
 app.get('/user/:id', (req, res) => {
-  const { id } = req.params;
-  const sql = `SELECT id, username, krw_balance, btc_balance, bio FROM users WHERE id = ?`;
+  const { id } = req.params; // TEXT 기반 id
+  const sql = `SELECT user_id, id, krw_balance, btc_balance, bio FROM users WHERE id = ?`;
   db.get(sql, [id], (err, row) => {
     if (err) {
       res.status(500).json({ error: 'Internal server error.' });
@@ -91,9 +91,9 @@ app.get('/user/:id', (req, res) => {
   });
 });
 
-// 전체 유저 정보 불러오기 API
+// 전체 유저 정보 가져오기 API (id, user_id 포함)
 app.get('/users', (req, res) => {
-  const sql = `SELECT id, username, krw_balance, btc_balance, bio FROM users`;
+  const sql = `SELECT user_id, id, krw_balance, btc_balance, bio FROM users`;
   db.all(sql, [], (err, rows) => {
     if (err) {
       res.status(500).json({ error: 'Internal server error.' });
@@ -102,6 +102,7 @@ app.get('/users', (req, res) => {
     }
   });
 });
+
 
 // 구매/판매 API
 app.post('/trade', async (req, res) => {

@@ -6,7 +6,7 @@ import HomeMain from './components/home/home-main';
 import Trade from './components/trade/trade';
 import Rank from './components/rank/rank';
 import Profile from './components/profile/profile';
-
+import ProtectedRoute from './components/guards/ProtectedRoute';
 const App = () => {
   return (
     // <Router basename={process.env.PUBLIC_URL}>
@@ -17,7 +17,13 @@ const App = () => {
             <Route index element={ <HomeMain /> } />
             <Route path='/trade' element={ <Trade /> } />
             <Route path='/rank' element={ <Rank /> } />
-            <Route path='/profile' element={ <Profile /> } />
+            <Route path='/profile' 
+              element={ 
+                <ProtectedRoute>
+                  <Profile /> 
+                </ProtectedRoute>
+                } 
+              />
           </Route>
       </Routes>
     </Router>
