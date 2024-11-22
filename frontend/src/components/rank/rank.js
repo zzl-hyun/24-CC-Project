@@ -17,7 +17,6 @@ import {
   Avatar,
   TableSortLabel,
   Grow,
-  Fade,
 } from '@mui/material';
 import {
   People as PeopleIcon,
@@ -25,25 +24,24 @@ import {
   AccountBalanceWallet as WalletIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import CountUp from 'react-countup'; // Import CountUp for number animation
+import CountUp from 'react-countup';
 
 const dummyData = [
-  { rank: 1, name: '홍길동', rateOfReturn: 15.0, balance: 1000000, recentTrade: '2023-10-01' },
-  { rank: 2, name: '김철수', rateOfReturn: 12.5, balance: 900000, recentTrade: '2023-09-25' },
-  { rank: 3, name: '이영희', rateOfReturn: -5.0, balance: 850000, recentTrade: '2023-08-15' },
-  { rank: 4, name: '박준호', rateOfReturn: 8.3, balance: 800000, recentTrade: '2023-10-05' },
-  { rank: 5, name: '최지수', rateOfReturn: 20.1, balance: 750000, recentTrade: '2023-09-30' },
-  // Add more dummy data as needed
+  { name: '홍길동', rateOfReturn: 15.0, balance: 1000000, recentTrade: '2023-10-01' },
+  { name: '김철수', rateOfReturn: 12.5, balance: 900000, recentTrade: '2023-09-25' },
+  { name: '이영희', rateOfReturn: -5.0, balance: 850000, recentTrade: '2023-08-15' },
+  { name: '박준호', rateOfReturn: 8.3, balance: 800000, recentTrade: '2023-10-05' },
+  { name: '최지수', rateOfReturn: 20.1, balance: 750000, recentTrade: '2023-09-30' },
 ];
 
 const Rank = () => {
-  const totalTraders = 300; // Example total number of traders
-  const activeTrades = 150; // Example active trades
-  const totalVolume = 50000000; // Example total trade volume
+  const totalTraders = 300;
+  const activeTrades = 150;
+  const totalVolume = 50000000;
 
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('rank');
-  const [checked, setChecked] = useState(false); // State for Grow animation
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     setChecked(true);
@@ -56,7 +54,12 @@ const Rank = () => {
   };
 
   const sortedData = useMemo(() => {
-    return [...dummyData].sort((a, b) => {
+    const sorted = [...dummyData].sort((a, b) => b.rateOfReturn - a.rateOfReturn);
+    return sorted.map((item, index) => ({ ...item, rank: index + 1 }));
+  }, []);
+
+  const displayedData = useMemo(() => {
+    return [...sortedData].sort((a, b) => {
       if (orderBy === 'recentTrade') {
         const dateA = new Date(a[orderBy]);
         const dateB = new Date(b[orderBy]);
@@ -71,7 +74,21 @@ const Rank = () => {
         return 0;
       }
     });
-  }, [order, orderBy]);
+  }, [order, orderBy, sortedData]);
+
+  const getMedalIcon = (rank) => {
+    const style = { fontSize: '2rem' }; // 메달 크기 키움
+    switch (rank) {
+      case 1:
+        return <span style={style}>🥇</span>;
+      case 2:
+        return <span style={style}>🥈</span>;
+      case 3:
+        return <span style={style}>🥉</span>;
+      default:
+        return rank;
+    }
+  };
 
   return (
     <Grow in={checked} timeout={1000}>
@@ -80,7 +97,7 @@ const Rank = () => {
           <Grow in={checked} timeout={1000}>
             <Grid item xs={12} md={4}>
               <Card elevation={3} className="card">
-                <CardContent>
+                <CardContent className="card-content">
                   <Box display="flex" alignItems="center">
                     <PeopleIcon color="primary" sx={{ fontSize: 40, mr: 2 }} />
                     <Box>
@@ -100,7 +117,7 @@ const Rank = () => {
           <Grow in={checked} timeout={1500}>
             <Grid item xs={12} md={4}>
               <Card elevation={3} className="card">
-                <CardContent>
+                <CardContent className="card-content">
                   <Box display="flex" alignItems="center">
                     <TrendingUpIcon color="success" sx={{ fontSize: 40, mr: 2 }} />
                     <Box>
@@ -120,7 +137,7 @@ const Rank = () => {
           <Grow in={checked} timeout={2000}>
             <Grid item xs={12} md={4}>
               <Card elevation={3} className="card">
-                <CardContent>
+                <CardContent className="card-content">
                   <Box display="flex" alignItems="center">
                     <WalletIcon color="secondary" sx={{ fontSize: 40, mr: 2 }} />
                     <Box>
@@ -186,9 +203,25 @@ const Rank = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {sortedData.map((trader) => (
-                  <TableRow key={trader.rank} hover>
-                    <TableCell>{trader.rank}</TableCell>
+                {displayedData.map((trader) => (
+                  <TableRow
+                    key={trader.rank}
+                    hover
+                    className={`MuiTableRow-root table-row rank-${trader.rank}`}
+                    sx={{
+                      '&:hover': {
+                        backgroundColor:
+                          trader.rank === 1
+                            ? '#ffd700'
+                            : trader.rank === 2
+                            ? '#b0b0b0'
+                            : trader.rank === 3
+                            ? '#8b4513'
+                            : '#f1f1f1',
+                      },
+                    }}
+                  >
+                    <TableCell className="medal">{getMedalIcon(trader.rank)}</TableCell>
                     <TableCell>
                       <Box display="flex" alignItems="center">
                         <Avatar
@@ -208,9 +241,7 @@ const Rank = () => {
                         {trader.rateOfReturn >= 0 ? `+${trader.rateOfReturn}%` : `${trader.rateOfReturn}%`}
                       </Typography>
                     </TableCell>
-                    <TableCell>
-                      <CountUp end={trader.balance} duration={2} separator="," />원
-                    </TableCell>
+                    <TableCell>{trader.balance.toLocaleString()}원</TableCell>
                     <TableCell>{trader.recentTrade}</TableCell>
                   </TableRow>
                 ))}
