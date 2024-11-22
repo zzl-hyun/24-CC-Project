@@ -9,7 +9,7 @@ const Header = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <header className="header">
+    <header className="header" style={{justifyContent:'center'}}>
       <nav className="nav-container">
         <div className="nav-content">
           <div className="logo">

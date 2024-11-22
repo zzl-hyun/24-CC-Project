@@ -1,6 +1,5 @@
 import React from "react";
 import { PieChart, Pie, Cell, Legend, Tooltip } from "recharts";
-import './d.css'
 import styled from "styled-components";
 
 const Distribution = ({ data }) => {
