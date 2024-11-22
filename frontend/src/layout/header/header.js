@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { X, User, Award, Home, ChartSpline } from 'lucide-react';
-import SignInModal from '../../components/modal/signInModal';
+import SignInModal from '../../modal/signInModal';
 import './header.css';
 
 const Header = () => {

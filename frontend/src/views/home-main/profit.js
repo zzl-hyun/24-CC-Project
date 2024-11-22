@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-
+import CountUp from 'react-countup';
 const Profit = ({ data }) => {
     let totalProfit = 0;
     let currentBTCBalance = 0;
@@ -49,13 +49,13 @@ const Profit = ({ data }) => {
         <StyledProfit>
             <Title>Profit Summary</Title>
             <Percentage profit={profitPercentage}>
-                {profitPercentage.toFixed(2)}%
+                <CountUp end={profitPercentage.toFixed(2)} duration={2} decimals={2} />%
             </Percentage>
             <Details>
-                <DetailItem>Total Profit: <span>{totalProfit.toLocaleString()} KRW</span></DetailItem>
-                <DetailItem>Current BTC Balance: <span>{currentBTCBalance.toFixed(8)} BTC</span></DetailItem>
-                <DetailItem>Total KRW Balance: <span>{currentKRWBalance.toLocaleString()} KRW</span></DetailItem>
-                <DetailItem>Average Buy Price: <span>{btcAvgBuyPrice.toLocaleString()} KRW</span></DetailItem>
+                <DetailItem>Total Profit: <span><CountUp end={totalProfit} duration={2} decimals={2} /> KRW</span></DetailItem>
+                <DetailItem>Current BTC Balance: <span><CountUp end={currentBTCBalance} duration={2.1} decimals={8} /> BTC</span></DetailItem>
+                <DetailItem>Total KRW Balance: <span><CountUp end={currentKRWBalance}  duration={2.2} decimals={2} /> KRW</span></DetailItem>
+                <DetailItem>Average Buy Price: <span><CountUp end={btcAvgBuyPrice}  duration={2.3} decimals={2} /> KRW</span></DetailItem>
             </Details>
         </StyledProfit>
     );

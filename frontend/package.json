@@ -2,7 +2,7 @@
   "name": "react-aws-ec2-nginx",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://44.214.32.61:5000",
+  "proxy": "http://localhost:4000/",
   "dependencies": {
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",

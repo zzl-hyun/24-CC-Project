@@ -3,6 +3,7 @@ import Profit from '../../views/home-main/profit';
 import History from '../../views/home-main/history';
 import Distribution from '../../views/home-main/distribution';
 import response from '../../temp/response';
+import axios from 'axios';
 import styled from 'styled-components';
 
 // import './home-main.css';
@@ -16,7 +17,8 @@ const HomeMain = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // const response = await axios.get('http://44.214.32.61:5000/decisions');
+                // const response = await axios.get('http://localhost:4000/balance');
+                // setData(response.data);
                 setData(response);
             } catch (err) {
                 setError(err.message);

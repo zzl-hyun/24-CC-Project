@@ -2,10 +2,14 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bodyParser = require('body-parser');
 const axios = require('axios');
+const cors = require('cors'); // Import the cors package
 
 const app = express();
-const PORT = 3000;
+const PORT = 4000;
 const DB_PATH = 'database.db';
+
+// Enable CORS for all routes
+app.use(cors());
 
 // 데이터베이스 연결
 const db = new sqlite3.Database(DB_PATH, (err) => {
