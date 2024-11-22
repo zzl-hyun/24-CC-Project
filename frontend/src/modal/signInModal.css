@@ -85,6 +85,22 @@
 .modal-login-button:hover {
   background-color: #45a049;
 }
+.modal-register-button {
+  width: 100%;
+  padding: 1rem;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background-color 0.3s;
+}
+
+.modal-register-button:hover {
+  background-color: #45a049;
+}
 
 .modal-additional-links {
   margin-top: 1rem;
@@ -92,11 +108,18 @@
   font-size: 0.9rem;
   color: #666;
 }
-
-.modal-additional-links a {
-  color: #4CAF50;
+#modal-switch{
+  justify-self: center
+}
+#modal-switch b {
+  cursor: pointer;
+  color: #4CAF49;
   text-decoration: none;
   margin: 0 0.5rem;
+}
+#modal-switch b:hover{
+  color: #378139;
+  transition: color 0.3s;
 }
 
 .modal-additional-links a:hover {
