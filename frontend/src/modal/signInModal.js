@@ -41,8 +41,9 @@ const SignInModal = ({ isOpen, onClose, onLoginSuccess }) => {
         id: loginId, // `loginId` 사용
         password: loginPassword, // `loginPassword` 사용
       });
-      toast.success('로그인이 성공했습니다.');
       localStorage.setItem('currentUser', loginId);
+      localStorage.setItem('isAuthenticated', 'true'); // localStorage 업데이트
+      toast.success('로그인이 성공했습니다.');
       onLoginSuccess(loginId); // 부모 컴포넌트에 로그인 성공 알림
       onClose();
     } catch (error) {

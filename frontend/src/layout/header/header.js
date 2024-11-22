@@ -19,12 +19,13 @@ const Header = () => {
     setCurrentUser('Profile'); // 사용자 정보 초기화
     localStorage.removeItem('isAuthenticated'); // localStorage 업데이트
     localStorage.removeItem('currentUser');
+    window.location.reload(); 
   };
 
   const handleLoginSuccess = (username) => {
     setIsAuthenticated(true); // 로그인 성공 시 상태 변경
     setCurrentUser(username); // 사용자 이름 업데이트
-    localStorage.setItem('isAuthenticated', 'true'); // localStorage 업데이트
+
     localStorage.setItem('currentUser', username); // localStorage 업데이트
   };
 
