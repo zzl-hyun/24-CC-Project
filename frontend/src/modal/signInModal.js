@@ -9,17 +9,18 @@ import { toast } from 'react-toastify';
 Modal.setAppElement('#root');
 
 const SignInModal = ({ isOpen, onClose, onLoginSuccess }) => {
-  const [loginId, setLoginId] = useState('');
+  const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  const [registerId, setRegisterId] = useState('');
+  const [registerUsername, setRegisterUsername] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [registerBio, setRegisterBio] = useState('');
   const [confirmRegisterPassword, setConfirmRegisterPassword] = useState('');
   const [error, setError] = useState('');
   const [mode, setMode] = useState('login'); // 'login' or 'register'
   const [isFading, setIsFading] = useState(false);
-  const isLoginFormValid = loginId && loginPassword;
-  const isRegisterFormValid = registerId && registerPassword && confirmRegisterPassword;
+  const isLoginFormValid = loginUsername && loginPassword;
+  const isRegisterFormValid =
+    registerUsername && registerPassword && confirmRegisterPassword;
 
   const handleModeSwitch = (newMode, state) => {
     setIsFading(true);
@@ -38,16 +39,18 @@ const SignInModal = ({ isOpen, onClose, onLoginSuccess }) => {
     }
     try {
       const response = await axios.post('http://localhost:4000/login', {
-        id: loginId, // `loginId` 사용
-        password: loginPassword, // `loginPassword` 사용
+        username: loginUsername, // 수정: username 사용
+        password: loginPassword, // 수정: loginPassword 사용
       });
-      localStorage.setItem('currentUser', loginId);
-      localStorage.setItem('isAuthenticated', 'true'); // localStorage 업데이트
       toast.success('로그인이 성공했습니다.');
-      onLoginSuccess(loginId); // 부모 컴포넌트에 로그인 성공 알림
+      localStorage.setItem('currentUser', loginUsername);
+      localStorage.setItem('isAuthenticated', 'true'); // localStorage 업데이트
+      onLoginSuccess(loginUsername); // 부모 컴포넌트에 로그인 성공 알림
       onClose();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid ID or password.');
+      toast.error(
+        error.response?.data?.message || 'Invalid username or password.'
+      );
     }
   };
 
@@ -63,14 +66,17 @@ const SignInModal = ({ isOpen, onClose, onLoginSuccess }) => {
     }
     try {
       const response = await axios.post('http://localhost:4000/register', {
-        id: registerId, // `registerId` 사용
-        password: registerPassword, // `registerPassword` 사용
-        bio: registerBio || '', // `registerBio` 사용
+        username: registerUsername, // 수정: username 사용
+        password: registerPassword, // 수정: registerPassword 사용
+        bio: registerBio || '', // bio 추가
       });
       toast.success('회원가입이 성공했습니다.');
       onClose();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'ID already exists or invalid data.');
+      toast.error(
+        error.response?.data?.message ||
+          'Username already exists or invalid data.'
+      );
     }
   };
 
@@ -83,52 +89,55 @@ const SignInModal = ({ isOpen, onClose, onLoginSuccess }) => {
     >
       <div className="modal-header">
         <h2 className="modal-title">{mode === 'login' ? 'Login' : 'Register'}</h2>
-        <button onClick={onClose} className="modal-close-button"><X size={24} /></button>
+        <button onClick={onClose} className="modal-close-button">
+          <X size={24} />
+        </button>
       </div>
       <div css={modalContainerStyle}>
         {mode === 'login' ? (
           <form css={formStyle(isFading)} onSubmit={handleLogin}>
-          <div>
-            <label htmlFor="loginId">ID</label>
-            <input
-              type="text"
-              id="loginId"
-              value={loginId}
-              onChange={(e) => setLoginId(e.target.value)}
-              required
-              placeholder="아이디를 입력하세요"
-              className="modal-input-field"
-            />
-          </div>
-          <div>
-            <label htmlFor="loginPassword">Password</label>
-            <input
-              type="password"
-              id="loginPassword"
-              value={loginPassword}
-              onChange={(e) => setLoginPassword(e.target.value)}
-              required
-              placeholder="비밀번호를 입력하세요"
-              className="modal-input-field"
-            />
-          </div>
-          {error && <p className="error-message">{error}</p>}
-          <button type="submit" className="modal-login-button">로그인</button>
-          <div id="modal-switch">
-            Don't have an account?{' '}
-            <b onClick={() => handleModeSwitch('register')}>Sign up</b>
-          </div>
-        </form>
-        
+            <div>
+              <label htmlFor="loginUsername">Username</label>
+              <input
+                type="text"
+                id="loginUsername"
+                value={loginUsername}
+                onChange={(e) => setLoginUsername(e.target.value)}
+                required
+                placeholder="아이디를 입력하세요"
+                className="modal-input-field"
+              />
+            </div>
+            <div>
+              <label htmlFor="loginPassword">Password</label>
+              <input
+                type="password"
+                id="loginPassword"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                required
+                placeholder="비밀번호를 입력하세요"
+                className="modal-input-field"
+              />
+            </div>
+            {error && <p className="error-message">{error}</p>}
+            <button type="submit" className="modal-login-button">
+              로그인
+            </button>
+            <div id="modal-switch">
+              Don't have an account?{' '}
+              <b onClick={() => handleModeSwitch('register')}>Sign up</b>
+            </div>
+          </form>
         ) : (
           <form css={formStyle(isFading)} onSubmit={handleRegister}>
             <div>
-              <label htmlFor="registerId">ID</label>
+              <label htmlFor="registerUsername">Username</label>
               <input
                 type="text"
-                id="registerId"
-                value={registerId}
-                onChange={(e) => setRegisterId(e.target.value)}
+                id="registerUsername"
+                value={registerUsername}
+                onChange={(e) => setRegisterUsername(e.target.value)}
                 required
                 placeholder="아이디를 입력하세요"
                 className="modal-input-field"
@@ -170,13 +179,14 @@ const SignInModal = ({ isOpen, onClose, onLoginSuccess }) => {
               />
             </div>
 
-            <button type="submit" className="modal-register-button">Register</button>
+            <button type="submit" className="modal-register-button">
+              Register
+            </button>
             <div id="modal-switch">
               Already have an account?{' '}
               <b onClick={() => handleModeSwitch('login')}>Sign in</b>
             </div>
           </form>
-
         )}
       </div>
     </Modal>
@@ -184,7 +194,6 @@ const SignInModal = ({ isOpen, onClose, onLoginSuccess }) => {
 };
 
 export default SignInModal;
-
 
 const fadeIn = keyframes`
   from {
