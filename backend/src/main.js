@@ -91,6 +91,18 @@ app.get('/user/:id', (req, res) => {
   });
 });
 
+// 전체 유저 정보 불러오기 API
+app.get('/users', (req, res) => {
+  const sql = `SELECT id, username, krw_balance, btc_balance, bio FROM users`;
+  db.all(sql, [], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: 'Internal server error.' });
+    } else {
+      res.status(200).json({ users: rows });
+    }
+  });
+});
+
 // 구매/판매 API
 app.post('/trade', async (req, res) => {
   const { userId, type, amount } = req.body;
