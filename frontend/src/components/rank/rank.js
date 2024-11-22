@@ -272,19 +272,6 @@ const Rank = () => {
           </TableContainer>
         </Box>
 
-        {/* 디버깅을 위한 원시 데이터 카드 추가 */}
-        <Box mt={5}>
-          <Typography variant="h4" gutterBottom>
-            디버깅: 원시 데이터
-          </Typography>
-          <Card elevation={3} className="card">
-            <CardContent>
-              <Typography variant="body1" component="pre">
-                {JSON.stringify(userData, null, 2)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Box>
       </Container>
     </Grow>
   );
