@@ -44,7 +44,7 @@ const Rank = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:4000/users');
+        const response = await fetch('http://23.23.207.68:4000/users');
         const data = await response.json();
         console.log('Fetched data:', data); // 디버깅용 로그
         if (Array.isArray(data.users)) {

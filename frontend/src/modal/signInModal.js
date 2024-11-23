@@ -38,7 +38,7 @@ const SignInModal = ({ isOpen, onClose, onLoginSuccess }) => {
       return;
     }
     try {
-      const response = await axios.post('http://localhost:4000/login', {
+      const response = await axios.post('http://23.23.207.68:4000/login', {
         username: loginUsername, // 수정: username 사용
         password: loginPassword, // 수정: loginPassword 사용
       });
@@ -65,7 +65,7 @@ const SignInModal = ({ isOpen, onClose, onLoginSuccess }) => {
       return;
     }
     try {
-      const response = await axios.post('http://localhost:4000/register', {
+      const response = await axios.post('http://23.23.207.68:4000/register', {
         username: registerUsername, // 수정: username 사용
         password: registerPassword, // 수정: registerPassword 사용
         bio: registerBio || '', // bio 추가
