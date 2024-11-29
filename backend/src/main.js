@@ -27,7 +27,7 @@ const createTables = () => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
-      krw_balance REAL DEFAULT 0.0,
+      krw_balance REAL DEFAULT 1000000.0,
       btc_balance REAL DEFAULT 0.0,
       bio TEXT DEFAULT ''
     );
