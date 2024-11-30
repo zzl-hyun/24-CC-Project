@@ -2,3 +2,7 @@
 /* #container {
     border: solid;
 } */
+
+#app{
+    height: max-content;
+}

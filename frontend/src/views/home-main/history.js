@@ -29,12 +29,21 @@ export default History;
 
 // Styled Components
 const StyledHistory = styled.div`
-    max-width: 600px;
+    max-width: 800px; /* profit + distribution의 너비에 맞춤 */
     margin: 10px auto 0;
     padding: 20px;
     background-color: #f7f7f7;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-height: 600px; /* 스크롤을 적용할 최대 높이 */
+    overflow-y: scroll; /* 스크롤 활성화 */
+    scrollbar-width: none; /* Firefox에서 스크롤바 숨김 */
+    -ms-overflow-style: none; /* Internet Explorer에서 스크롤바 숨김 */
+
+    /* Chrome, Edge, Safari에서 스크롤바 숨기기 */
+    &::-webkit-scrollbar {
+        display: none;
+    }
 `;
 
 const Title = styled.h1`
