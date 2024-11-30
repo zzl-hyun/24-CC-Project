@@ -10,9 +10,10 @@ const Order = () => {
   const [amount, setAmount] = useState(""); // 사용자가 입력한 거래 수량
   const [message, setMessage] = useState(""); // 성공/실패 메시지
   const [transactions, setTransactions] = useState([]); // 거래 내역
+  const [highlighted, setHighlighted] = useState(false); // 애니메이션 트리거 상태
 
   const currentUser = localStorage.getItem("currentUser");
-
+  const totalValue = balance + btcBalance * price;
   // 사용자 데이터 가져오기
   useEffect(() => {
     const fetchUserData = async () => {
@@ -22,11 +23,7 @@ const Order = () => {
       }
 
       try {
-        const response = await axios.get(
-        //   `http://23.23.207.68:4000/user/${currentUser}`
-          `http://localhost:4000/user/${currentUser}`
-
-        );
+        const response = await axios.get(`http://localhost:4000/user/${currentUser}`);
         const data = response.data;
 
         setName(data.user.id || "Guest");
@@ -45,9 +42,7 @@ const Order = () => {
     const fetchBitcoinPrice = async () => {
       try {
         const response = await axios.get("https://api.upbit.com/v1/ticker", {
-          params: {
-            markets: "KRW-BTC",
-          },
+          params: { markets: "KRW-BTC" },
         });
         setPrice(response.data[0].trade_price); // 현재 비트코인 시세
       } catch (error) {
@@ -63,64 +58,59 @@ const Order = () => {
     return () => clearInterval(interval);
   }, []);
 
-    // 거래 내역 가져오기
-   useEffect(() => {
-    const fetchTransactions = async () => {
-        try {
-        const response = await axios.get(`http://localhost:4000/transactions/${currentUser}`);
-        setTransactions(response.data.transactions || []);
-        } catch (error) {
-        console.error("Error fetching transaction history:", error);
-        }
-    };
-
-    fetchTransactions();
-   }, [balance]);
-
   // 거래 요청 함수
   const handleTrade = async (type) => {
     const normalizedAmount = parseFloat(amount.replace(/,/g, ""));
 
     if (!normalizedAmount || isNaN(normalizedAmount)) {
-        setMessage("유효한 금액(KRW)을 입력하세요.");
-        return;
+      setMessage("유효한 금액(KRW)을 입력하세요.");
+      return;
     }
     if (normalizedAmount < 5000) {
-        setMessage("거래 금액은 최소 5000원 이상이어야 합니다.");
-        return;
-      }
+      setMessage("거래 금액은 최소 5000원 이상이어야 합니다.");
+      return;
+    }
 
     try {
-    //   const response = await axios.post("http://23.23.207.68:4000/trade", {
       const response = await axios.post("http://localhost:4000/trade", {
         userId: currentUser,
         type,
         amount: normalizedAmount, // 쉼표 제거 후 숫자로 변환된 금액 전달
-    });
+      });
 
       // 서버 응답에 따라 상태 업데이트
-      const { updatedBalances, btcPrice, message } = response.data;
+      const { updatedBalances, btcPrice, transaction } = response.data;
       setBalance(updatedBalances.krwBalance);
       setBtcBalance(updatedBalances.btcBalance);
-      setMessage(message || `${type === "buy" ? "구매" : "판매"} 성공! 현재 BTC 가격: ${btcPrice.toLocaleString()} KRW`);
+      setMessage(`${type === "buy" ? "구매" : "판매"} 성공!`);
+      // 거래 내역에 새 항목 추가
+      setTransactions((prev) => [transaction, ...prev]);
     } catch (error) {
       console.error("Trade error:", error);
-      setMessage(
-        error.response?.data?.error || "거래 중 문제가 발생했습니다."
-      );
+      setMessage(error.response?.data?.error || "거래 중 문제가 발생했습니다.");
     }
   };
-  const totalValue = balance + (btcBalance * price);
+    // 거래 내역 가져오기
+    useEffect(() => {
+        const fetchTransactions = async () => {
+            try {
+            const response = await axios.get(`http://localhost:4000/transactions/${currentUser}`);
+            setTransactions(response.data.transactions || []);
+            } catch (error) {
+            console.error("Error fetching transaction history:", error);
+            }
+        };
+
+        fetchTransactions();
+    }, [balance]);
+
   return (
     <OrderContainer>
       <Title>Order</Title>
       <ContentContainer>
         <InfoContainer>
           <InfoRow>사용자: {name}</InfoRow>
-          <InfoRow>
-            총 자산: 
-            {totalValue ? `${totalValue.toLocaleString()} KRW` : "Loading..."}
-          </InfoRow>
+          <InfoRow>총 자산: {totalValue ? `${totalValue.toLocaleString()} KRW` : "Loading..."}</InfoRow>
           <InfoRow>보유 KRW: {balance.toLocaleString()} KRW</InfoRow>
           <InfoRow>보유 BTC: {btcBalance.toFixed(8)} BTC</InfoRow>
         </InfoContainer>
@@ -133,31 +123,36 @@ const Order = () => {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
-          <Button className="buy" onClick={() => handleTrade("buy")}>
-            Buy
-          </Button>
-          <Button className="sell" onClick={() => handleTrade("sell")}>
-            Sell
-          </Button>
+          <Button className="buy" onClick={() => handleTrade("buy")}>Buy</Button>
+          <Button className="sell" onClick={() => handleTrade("sell")}>Sell</Button>
           {message && <InfoRow style={{ color: "gray" }}>{message}</InfoRow>}
         </ButtonContainer>
       </ContentContainer>
+
       <TransactionContainer>
         <TransactionTitle>거래 내역</TransactionTitle>
         {transactions.length > 0 ? (
-          <TransactionList>
-            {transactions.map((transaction) => (
-              <TransactionItem key={transaction.id}>
-                <span style={{ color: transaction.type.toUpperCase() === 'SELL' ? 'red' : 'green' }}>
-                {transaction.type.toUpperCase()}
+            <TransactionList>
+                <TransactionHeader>
+                    <HeaderItem>거래 타입</HeaderItem>
+                    <HeaderItem>KRW 주문량</HeaderItem>
+                    <HeaderItem>BTC 주문량</HeaderItem>
+                    <HeaderItem>구매가 (KRW)</HeaderItem>
+                    <HeaderItem>거래 시간</HeaderItem>
+                </TransactionHeader>
+            {transactions.map((transaction, index) => (
+                <TransactionItem key={index}>
+                <span style={{ color: transaction.type?.toUpperCase() === "SELL" ? "red" : "green" }}>
+                    {transaction.type?.toUpperCase() || "N/A"}
                 </span>
-                <span>{transaction.amount.toFixed(3)} KRW</span>
-                {/* <span>{transaction.total_krw.toLocaleString()} KRW</span> */}
-                <span>{new Date(transaction.timestamp).toLocaleString()}</span>
-              </TransactionItem>
+                <span>{transaction.krw_amount?.toLocaleString() || "0"} KRW</span>
+                <span>{transaction.btc_amount?.toFixed(8) || "0.00000000"} BTC</span>
+                <span>{transaction.price?.toLocaleString() || "0"} KRW</span>
+                <span>{transaction.timestamp ? new Date(transaction.timestamp).toLocaleString() : "N/A"}</span>
+                </TransactionItem>
             ))}
-          </TransactionList>
-        ) : (
+            </TransactionList>
+            ) : (
           <InfoRow>거래 내역이 없습니다.</InfoRow>
         )}
       </TransactionContainer>
@@ -279,9 +274,29 @@ const TransactionList = styled.ul`
 `;
 
 const TransactionItem = styled.li`
-  display: flex;
-  justify-content: space-between;
+  display: grid; /* 데이터 간격 조절을 위해 grid 사용 */
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr; /* 각 항목 간 폭 균등 분배 */
+  gap: 10px;
   padding: 10px;
   border-bottom: 1px solid #ddd;
   font-size: 14px;
+
+  &:last-child {
+    border-bottom: none; /* 마지막 항목은 테두리 제거 */
+  }
+`;
+
+const TransactionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: #f1f1f1;
+  border-bottom: 2px solid #ddd;
+  font-weight: bold;
+  font-size: 14px;
+`;
+
+const HeaderItem = styled.span`
+  flex: 1;
+  text-align: left;
 `;

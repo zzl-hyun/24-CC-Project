@@ -36,8 +36,10 @@ const createTables = () => {
     CREATE TABLE IF NOT EXISTS transactions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
-      type TEXT NOT NULL CHECK(type IN ('buy', 'sell')),
-      amount REAL NOT NULL,
+      type TEXT NOT NULL CHECK(type IN ('buy', 'sell')), -- 거래 타입 (buy/sell)
+      krw_amount REAL NOT NULL, -- 거래된 KRW 금액
+      btc_amount REAL NOT NULL, -- 거래된 BTC 양
+      price REAL NOT NULL, -- 거래 당시 1 BTC의 가격
       timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
     );
@@ -119,6 +121,7 @@ app.post('/trade', async (req, res) => {
     });
     const btcPrice = response.data[0].trade_price;
 
+    // 유저 정보 가져오기
     db.get(`SELECT krw_balance, btc_balance FROM users WHERE id = ?`, [userId], (err, user) => {
       if (err) return res.status(500).json({ error: 'Internal server error.' });
       if (!user) return res.status(404).json({ error: 'User not found.' });
@@ -126,23 +129,34 @@ app.post('/trade', async (req, res) => {
       let krwBalance = user.krw_balance;
       let btcBalance = user.btc_balance;
 
+      // 거래 로직
+      let krwAmount = 0;
+      let btcAmount = 0;
+
       if (type === 'buy') {
-        const btcAmount = amount / btcPrice; // KRW -> BTC 변환
-        if (krwBalance < amount) {
+        btcAmount = amount / btcPrice; // KRW -> BTC 변환
+        krwAmount = amount;
+
+        if (krwBalance < krwAmount) {
           return res.status(400).json({ error: 'Insufficient KRW balance.' });
         }
-        krwBalance -= amount;
+
+        krwBalance -= krwAmount;
         btcBalance += btcAmount;
+
       } else if (type === 'sell') {
-        const krwEarned = btcPrice * amount; // BTC -> KRW 변환
-        if (btcBalance < amount / btcPrice) {
+        btcAmount = amount / btcPrice; // BTC -> KRW 변환
+        krwAmount = amount;
+
+        if (btcBalance < btcAmount) {
           return res.status(400).json({ error: 'Insufficient BTC balance.' });
         }
-        btcBalance -= amount / btcPrice;
-        krwBalance += amount;
+
+        btcBalance -= btcAmount;
+        krwBalance += krwAmount;
       }
 
-      // 거래 업데이트
+      // 사용자 잔고 업데이트
       const updateUserSQL = `UPDATE users SET krw_balance = ?, btc_balance = ? WHERE id = ?`;
       db.run(updateUserSQL, [krwBalance, btcBalance, userId], function (err) {
         if (err) {
@@ -150,16 +164,27 @@ app.post('/trade', async (req, res) => {
         }
 
         // 거래 기록 추가
-        const insertTransactionSQL = `INSERT INTO transactions (user_id, type, amount) VALUES (?, ?, ?)`;
-        db.run(insertTransactionSQL, [userId, type, amount], function (err) {
+        const insertTransactionSQL = `
+          INSERT INTO transactions (user_id, type, krw_amount, btc_amount, price)
+          VALUES (?, ?, ?, ?, ?)
+        `;
+
+        db.run(insertTransactionSQL, [userId, type, krwAmount, btcAmount, btcPrice], function (err) {
           if (err) {
             return res.status(500).json({ error: 'Failed to record transaction.' });
           }
 
+          // 성공 응답
           res.status(200).json({
             message: 'Trade successful!',
             updatedBalances: { krwBalance, btcBalance },
-            btcPrice
+            btcPrice,
+            transaction: {
+              type,
+              krwAmount,
+              btcAmount,
+              price: btcPrice
+            }
           });
         });
       });
@@ -174,7 +199,7 @@ app.get('/transactions/:userId', (req, res) => {
   const { userId } = req.params;
 
   const sql = `
-    SELECT id, type, amount, timestamp
+    SELECT id, type, krw_amount, btc_amount, price, timestamp
     FROM transactions
     WHERE user_id = ?
     ORDER BY timestamp DESC
