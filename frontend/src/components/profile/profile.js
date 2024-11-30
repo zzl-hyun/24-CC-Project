@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -21,6 +21,7 @@ import {
   Person as PersonIcon,
 } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import axios from 'axios';
 
 const theme = createTheme({
   typography: {
@@ -29,11 +30,10 @@ const theme = createTheme({
 });
 
 const Profile = () => {
-  // 상태 변수 선언
-  const [balance, setBalance] = useState(100000);
-  const [rateOfReturn, setRateOfReturn] = useState(12.5);
-  const [name, setName] = useState('홍길동');
-  const [statusMessage, setStatusMessage] = useState('오늘도 화이팅!');
+  const [name, setName] = useState('');
+  const [balance, setBalance] = useState(0); // 초기값 0으로 설정
+  const [statusMessage, setStatusMessage] = useState('');
+  const [rateOfReturn, setRateOfReturn] = useState(0);
 
   const [openWithdrawDialog, setOpenWithdrawDialog] = useState(false);
   const [withdrawConfirmText, setWithdrawConfirmText] = useState('');
@@ -42,6 +42,34 @@ const Profile = () => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
+  const currentUser = localStorage.getItem('currentUser');
+
+  // 데이터 가져오기
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!currentUser) {
+        console.warn('No currentUser found in localStorage');
+        return; // currentUser가 없으면 함수 종료
+      }
+
+      try {
+        const response = await axios.get(`http://23.23.207.68:4000/user/${currentUser}`);
+        const data = response.data;
+
+        // 데이터 검증 후 상태 업데이트
+        setName(data.user.id || 'Guest');
+        setBalance(data.user.krw_balance || 0);
+        setStatusMessage(data.user.bio || 'No status message provided');
+
+        console.log('Fetched data:', data.user.id); // 디버깅용 로그
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, [currentUser]); // 의존성 배열에 currentUser 추가
 
   const handlePasswordChange = () => {
     setOpenPasswordDialog(true);
@@ -70,7 +98,6 @@ const Profile = () => {
 
   const handleStatusMessageChange = () => {
     // 상태 메시지 변경 로직 처리
-    // TODO: Implement status message change logic here
     alert('상태 메시지가 변경되었습니다.');
   };
 
@@ -182,90 +209,6 @@ const Profile = () => {
             </Button>
           </Box>
         </Paper>
-
-        {/* 비밀번호 변경 모달 */}
-        <Dialog
-          open={openPasswordDialog}
-          onClose={() => setOpenPasswordDialog(false)}
-        >
-          <DialogTitle>비밀번호 변경</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              margin="dense"
-              label="현재 비밀번호"
-              type="password"
-              fullWidth
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-            />
-            <TextField
-              margin="dense"
-              label="새 비밀번호"
-              type="password"
-              fullWidth
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
-            <TextField
-              margin="dense"
-              label="새 비밀번호 확인"
-              type="password"
-              fullWidth
-              value={confirmNewPassword}
-              onChange={(e) => setConfirmNewPassword(e.target.value)}
-              error={
-                newPassword !== confirmNewPassword && confirmNewPassword !== ''
-              }
-              helperText={
-                newPassword !== confirmNewPassword && confirmNewPassword !== ''
-                  ? '비밀번호가 일치하지 않습니다.'
-                  : ''
-              }
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenPasswordDialog(false)}>취소</Button>
-            <Button
-              onClick={handlePasswordSubmit}
-              color="primary"
-              disabled={!canSubmitPasswordChange}
-            >
-              변경
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* 탈퇴 확인 모달 */}
-        <Dialog
-          open={openWithdrawDialog}
-          onClose={() => setOpenWithdrawDialog(false)}
-        >
-          <DialogTitle>탈퇴 확인</DialogTitle>
-          <DialogContent>
-            <Typography>
-              탈퇴하시겠습니까? 그러면 되돌릴 수 없습니다.
-            </Typography>
-            <TextField
-              autoFocus
-              margin="dense"
-              label="탈퇴를 원하시면 '탈퇴합니다'를 입력해주세요."
-              fullWidth
-              value={withdrawConfirmText}
-              onChange={(e) => setWithdrawConfirmText(e.target.value)}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenWithdrawDialog(false)}>취소</Button>
-            <Button
-              onClick={confirmWithdraw}
-              color="secondary"
-              disabled={withdrawConfirmText !== '탈퇴합니다'}
-            >
-              탈퇴
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Container>
     </ThemeProvider>
   );
