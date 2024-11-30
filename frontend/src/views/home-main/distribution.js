@@ -24,8 +24,8 @@ const Distribution = ({ data }) => {
 
     return (
         <StyledDistribution>
-            <h1>Decision Distribution</h1>
-            <PieChart width={400} height={400}>
+            <Title>Decision Distribution</Title>
+            <PieChart width={300} height={400} style={{width:'250px'}}>
                 <Pie
                     data={chartData}
                     dataKey="value"
@@ -58,6 +58,14 @@ const StyledDistribution = styled.div`
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
-    margin: 10px auto 0;
+    width: 100%; /* 반응형을 위해 부모의 flex 너비에 맞춤 */
+    max-width: 800px; /* 최대 너비 제한 */
+    height: 400px; /* 고정 높이 */
+    margin: 0 auto;
+`;
+const Title = styled.h1`
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
 `;

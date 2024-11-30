@@ -68,7 +68,9 @@ const SignInModal = ({ isOpen, onClose, onLoginSuccess }) => {
         bio: registerBio || '', // `registerBio` 사용
       });
       toast.success('회원가입이 성공했습니다.');
-      onClose();
+      handleModeSwitch('login');
+
+        // onClose();
     } catch (error) {
       toast.error(error.response?.data?.message || 'ID already exists or invalid data.');
     }

@@ -73,7 +73,9 @@ const StyledProfit = styled.div`
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
+    width: 100%; /* 반응형을 위해 부모의 flex 너비에 맞춤 */
+    max-width: 800px; /* 최대 너비 제한 */
+    height: 400px; /* 고정 높이 */
     margin: 0 auto;
 `;
 
