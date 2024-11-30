@@ -169,6 +169,29 @@ app.post('/trade', async (req, res) => {
   }
 });
 
+// 유저 거래 내역 가져오기 API
+app.get('/transactions/:userId', (req, res) => {
+  const { userId } = req.params;
+
+  const sql = `
+    SELECT id, type, amount, timestamp
+    FROM transactions
+    WHERE user_id = ?
+    ORDER BY timestamp DESC
+  `;
+
+  db.all(sql, [userId], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: 'Failed to fetch transaction history.' });
+    } else if (rows.length === 0) {
+      res.status(404).json({ error: 'No transactions found for this user.' });
+    } else {
+      res.status(200).json({ transactions: rows });
+    }
+  });
+});
+
+
 
 // 서버 시작
 app.listen(PORT, () => {
