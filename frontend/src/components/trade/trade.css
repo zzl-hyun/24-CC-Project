@@ -1,22 +1,32 @@
-
 .trade {
     display: flex;
-    justify-content: space-between; /* Add space between chart and order sections */
+    flex-direction: column; /* 세로로 정렬 */
+
+    /* padding: 20px; */
 }
 
-/* Clear floats to prevent layout issues */
-.trade::after {
-    content: "";
-    display: table;
-    clear: both;
+.widget-section {
+    width: 100%;
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-.chart-section{
-    float: left;
-    width: 75%;
 
+.chart-section {
+    width: 100%;
+    background: #ffffff;
+    padding: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-.order-section{
-    float: right;
-    width: 25%;
 
+.order-section {
+    width: 100%;
+    background: #ffffff;
+    padding: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    align-items: center; /* 내용물 수평 중앙 정렬 */
+    justify-content: center; /* 내용물 수직 중앙 정렬 */
 }

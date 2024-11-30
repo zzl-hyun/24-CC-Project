@@ -37,8 +37,8 @@ const SignInModal = ({ isOpen, onClose, onLoginSuccess }) => {
       return;
     }
     try {
-      // const response = await axios.post('http://localhost:4000/login', {
-      const response = await axios.post('http://23.23.207.68:4000/login', {
+      const response = await axios.post('http://localhost:4000/login', {
+      // const response = await axios.post('http://23.23.207.68:4000/login', {
         id: loginId, // `loginId` 사용
         password: loginPassword, // `loginPassword` 사용
       });

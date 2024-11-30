@@ -40,6 +40,8 @@ const Chart = () => {
       );
 };
 
+
+
 export default memo(Chart);
 
 

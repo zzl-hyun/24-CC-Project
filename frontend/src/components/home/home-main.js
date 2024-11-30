@@ -4,6 +4,7 @@ import History from '../../views/home-main/history';
 import Distribution from '../../views/home-main/distribution';
 import axios from 'axios';
 import styled from 'styled-components';
+import { AutoStories } from '@mui/icons-material';
 
 const HomeMain = () => {
     const [data, setData] = useState([]);
@@ -25,6 +26,7 @@ const HomeMain = () => {
 
         fetchData();
     }, []);
+
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;

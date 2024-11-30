@@ -106,7 +106,7 @@ app.get('/users', (req, res) => {
 
 // 구매/판매 API
 app.post('/trade', async (req, res) => {
-  const { userId, type, amount } = req.body;
+  const { userId, type, amount } = req.body; // amount는 KRW 단위
 
   if (!['buy', 'sell'].includes(type)) {
     return res.status(400).json({ error: 'Invalid trade type. Use "buy" or "sell".' });
@@ -127,18 +127,19 @@ app.post('/trade', async (req, res) => {
       let btcBalance = user.btc_balance;
 
       if (type === 'buy') {
-        const totalCost = btcPrice * amount;
-        if (krwBalance < totalCost) {
+        const btcAmount = amount / btcPrice; // KRW -> BTC 변환
+        if (krwBalance < amount) {
           return res.status(400).json({ error: 'Insufficient KRW balance.' });
         }
-        krwBalance -= totalCost;
-        btcBalance += amount;
+        krwBalance -= amount;
+        btcBalance += btcAmount;
       } else if (type === 'sell') {
-        if (btcBalance < amount) {
+        const krwEarned = btcPrice * amount; // BTC -> KRW 변환
+        if (btcBalance < amount / btcPrice) {
           return res.status(400).json({ error: 'Insufficient BTC balance.' });
         }
-        krwBalance += btcPrice * amount;
-        btcBalance -= amount;
+        btcBalance -= amount / btcPrice;
+        krwBalance += amount;
       }
 
       // 거래 업데이트
@@ -167,6 +168,7 @@ app.post('/trade', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch BTC price.' });
   }
 });
+
 
 // 서버 시작
 app.listen(PORT, () => {
