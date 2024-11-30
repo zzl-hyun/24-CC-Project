@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import styled from "styled-components";
+import styled, {keyframes} from "styled-components";
 
 const Order = () => {
   const [name, setName] = useState("");
@@ -11,7 +11,7 @@ const Order = () => {
   const [message, setMessage] = useState(""); // 성공/실패 메시지
   const [transactions, setTransactions] = useState([]); // 거래 내역
   const [highlighted, setHighlighted] = useState(false); // 애니메이션 트리거 상태
-
+  const [averageBuyPrice, setaverageBuyPrice] = useState(0);
   const currentUser = localStorage.getItem("currentUser");
   const totalValue = balance + btcBalance * price;
   // 사용자 데이터 가져오기
@@ -90,19 +90,51 @@ const Order = () => {
       setMessage(error.response?.data?.error || "거래 중 문제가 발생했습니다.");
     }
   };
-    // 거래 내역 가져오기
-    useEffect(() => {
-        const fetchTransactions = async () => {
-            try {
-            const response = await axios.get(`http://localhost:4000/transactions/${currentUser}`);
-            setTransactions(response.data.transactions || []);
-            } catch (error) {
-            console.error("Error fetching transaction history:", error);
-            }
-        };
 
-        fetchTransactions();
-    }, [balance]);
+  const calculateAverageBuyPrice = (transactions) => {
+    const buyTransactions = transactions.filter(tx => tx.type === "buy");
+    const totalKrw = buyTransactions.reduce((sum, tx) => sum + tx.krw_amount, 0);
+    const totalBtc = buyTransactions.reduce((sum, tx) => sum + tx.btc_amount, 0);
+    return totalBtc > 0 ? totalKrw / totalBtc : 0;
+  };
+  const calculateProfitRate = (currentPrice, averagePrice) => {
+    return averagePrice > 0 ? ((currentPrice - averagePrice) / averagePrice) * 100 : 0;
+  };
+  useEffect(() => {
+    if (transactions.length > 0) {
+      const avgPrice = calculateAverageBuyPrice(transactions);
+      setaverageBuyPrice(avgPrice);
+    }
+  }, [transactions]);
+  
+  
+  // 거래 내역 가져오기
+  useEffect(() => {
+    const fetchTransactions = async () => {
+        try {
+        const response = await axios.get(`http://localhost:4000/transactions/${currentUser}`);
+        const txs = response.data.transactions || [];
+      setTransactions(txs);
+
+        // 평균 매수 가격 계산
+      const avgPrice = calculateAverageBuyPrice(txs);
+      setaverageBuyPrice(avgPrice);
+        } catch (error) {
+        console.error("Error fetching transaction history:", error);
+        }
+    };
+
+    fetchTransactions();
+  }, [balance]);
+
+    // 업데이트 시 애니메이션 트리거
+  useEffect(() => {
+    setHighlighted(true);
+    const timeout = setTimeout(() => setHighlighted(false), 1000); // 500ms 후 효과 제거
+    return () => clearTimeout(timeout);
+  }, [balance, btcBalance, totalValue]);
+
+
 
   return (
     <OrderContainer>
@@ -110,9 +142,18 @@ const Order = () => {
       <ContentContainer>
         <InfoContainer>
           <InfoRow>사용자: {name}</InfoRow>
-          <InfoRow>총 자산: {totalValue ? `${totalValue.toLocaleString()} KRW` : "Loading..."}</InfoRow>
+          <InfoRow>총 자산: <span style={{color: totalValue > 1000000 ? "green" : "red"}}>{totalValue.toLocaleString()} </span>KRW </InfoRow>
           <InfoRow>보유 KRW: {balance.toLocaleString()} KRW</InfoRow>
           <InfoRow>보유 BTC: {btcBalance.toFixed(8)} BTC</InfoRow>
+          <InfoRow>
+    수익률: 
+    {averageBuyPrice && price ? 
+      `${calculateProfitRate(price, averageBuyPrice).toFixed(2)}%` 
+      : "N/A"}
+  </InfoRow>
+  <InfoRow>
+    평단가: {averageBuyPrice > 0 ? `${averageBuyPrice.toLocaleString()} KRW` : "N/A"}
+  </InfoRow>
         </InfoContainer>
 
         <ButtonContainer>
@@ -196,12 +237,19 @@ const InfoContainer = styled.div`
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
-
+const blink = keyframes`
+  0% { color: #000; }   /* 기본 색상 */
+  50% { color: transparent; } /* 깜박이는 상태 */
+  100% { color: #000; } /* 기본 색상 복원 */
+`;
 const InfoRow = styled.div`
   font-size: 14px;
   color: #555;
   margin-bottom: 10px;
   text-align: center;
+  &.blink {
+    animation: ${blink} 0.2s ease-out; /* 무한 깜박임 */
+  }
 `;
 
 const ButtonContainer = styled.div`
