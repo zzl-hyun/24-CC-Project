@@ -23,6 +23,8 @@ import {
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
 
+const API_BASE_URL = 'http://localhost:4000'; // API 기본 URL
+
 const theme = createTheme({
   typography: {
     fontFamily: 'Noto Sans KR, sans-serif',
@@ -57,7 +59,7 @@ const Profile = () => {
 
       try {
         //const response = await axios.get(`http://23.23.207.68:4000/user/${currentUser}`); 주석지우지말것!!!!!!
-        const response = await axios.get(`http://localhost:4000/user/${currentUser}`);
+        const response = await axios.get(`${API_BASE_URL}/user/${currentUser}`);
         const data = response.data;
 
         // 현재 BTC 가격 가져오기
@@ -96,7 +98,7 @@ const Profile = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:4000/change-password', {
+      const response = await axios.post(`${API_BASE_URL}/change-password`, {
         id: currentUser,
         currentPassword,
         newPassword,
@@ -131,7 +133,7 @@ const Profile = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:4000/withdraw', {
+      const response = await axios.post(`${API_BASE_URL}/withdraw`, {
         id: currentUser,
       });
 
@@ -150,7 +152,7 @@ const Profile = () => {
 
   const handleStatusMessageChange = async () => {
     try {
-      const response = await axios.post('http://localhost:4000/update-status', {
+      const response = await axios.post(`${API_BASE_URL}/update-status`, {
         id: currentUser,
         bio: statusMessage,
       });

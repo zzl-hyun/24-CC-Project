@@ -30,6 +30,8 @@ import {
 } from '@mui/icons-material';
 import CountUp from 'react-countup';
 
+const API_BASE_URL = 'http://localhost:4000'; // API 기본 URL
+
 const Rank = () => {
   const INITIAL_ASSET = 1000000; // 초기 자산 (100만 원)
 
@@ -68,7 +70,7 @@ const Rank = () => {
 
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:4000/users');
+        const response = await fetch(`${API_BASE_URL}/users`);
         const data = await response.json();
         if (Array.isArray(data.users)) {
           setUserData(data.users);
@@ -95,7 +97,7 @@ const Rank = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:4000/users');
+        const response = await fetch(`${API_BASE_URL}/users`);
         const data = await response.json();
         if (Array.isArray(data.users)) {
           setUserData(data.users);
