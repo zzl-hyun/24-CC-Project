@@ -158,3 +158,23 @@ body {
 .MuiTableRow-root.table-row.rank-3:hover {
   background-color: #8b4513 !important;
 }
+
+.banner {
+  display: flex;
+  height: 300px;
+  animation: scroll 300s linear infinite;
+}
+
+.moving-banner {
+  height: 300px;
+  margin-right: 0px; /* 배너 간 간격 */
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-1000%);
+  }
+}

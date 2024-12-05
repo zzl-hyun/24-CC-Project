@@ -12,11 +12,23 @@ const Order = () => {
   const [transactions, setTransactions] = useState([]); // 거래 내역
   const [highlighted, setHighlighted] = useState(false); // 애니메이션 트리거 상태
   const [averageBuyPrice, setaverageBuyPrice] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const currentUser = localStorage.getItem("currentUser");
   const totalValue = balance + btcBalance * price;
   // 사용자 데이터 가져오기
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const authStatus = localStorage.getItem("isAuthenticated") === "true";
+      setIsAuthenticated(authStatus);
+    }, 500); // 0.5초마다 체크
+    return () => clearInterval(interval);
+  }, []);
+
+
   useEffect(() => {
     const fetchUserData = async () => {
+
       if (!currentUser) {
         console.warn("No currentUser found in localStorage");
         return;
@@ -98,7 +110,7 @@ const Order = () => {
     return totalBtc > 0 ? totalKrw / totalBtc : 0;
   };
   const calculateProfitRate = (currentPrice, averagePrice) => {
-    return averagePrice > 0 ? ((currentPrice - averagePrice) / averagePrice) * 100 : 0;
+    return averagePrice > 0 ? ((totalValue - 1000000) / 1000000) * 100 : 0;
   };
   useEffect(() => {
     if (transactions.length > 0) {
@@ -137,7 +149,8 @@ const Order = () => {
 
 
   return (
-    <OrderContainer>
+  <>
+    <OrderContainer isAuthenticated={isAuthenticated}>
       <Title>Order</Title>
       <ContentContainer>
         <InfoContainer>
@@ -158,6 +171,8 @@ const Order = () => {
 
         <ButtonContainer>
           <InfoRow style={{ color: "green" }}>시장가로 주문하기</InfoRow>
+          <InfoRow style={{ color: "gray", fontSize: "10px" }}>수수료 : 0.01%</InfoRow>
+      
           <Input
             type="text"
             placeholder="주문 수량(KRW)"
@@ -171,6 +186,11 @@ const Order = () => {
       </ContentContainer>
 
       <TransactionContainer>
+      {!isAuthenticated && (
+      <LoginOverlay isAuthenticated={isAuthenticated}>
+        로그인 후 이용 가능합니다.
+      </LoginOverlay>
+    )}
         <TransactionTitle>거래 내역</TransactionTitle>
         {transactions.length > 0 ? (
             <TransactionList>
@@ -198,6 +218,7 @@ const Order = () => {
         )}
       </TransactionContainer>
     </OrderContainer>
+  </>
   );
 };
 
@@ -213,7 +234,27 @@ const OrderContainer = styled.div`
   background: #f8f9fa;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   font-family: "Arial", sans-serif;
+
+  pointer-events: ${({ isAuthenticated }) => (isAuthenticated ? "auto" : "none")};
+  position: relative;
 `;
+
+const LoginOverlay = styled.div`
+  display: ${({ isAuthenticated }) => (isAuthenticated ? "none" : "flex")};
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  color: #333;
+  font-weight: bold;
+  z-index: 10;
+`;
+
 
 const Title = styled.h1`
   text-align: center;

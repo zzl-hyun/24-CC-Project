@@ -29,9 +29,10 @@ import {
   SentimentDissatisfied as FearIcon,
 } from '@mui/icons-material';
 import CountUp from 'react-countup';
+import bannerImg from '../../asset/banner.png';
 
 const API_BASE_URL = 'http://localhost:4000'; // API 기본 URL
-
+const backgroundImageUrl = '../../public/banner.png'
 const Rank = () => {
   const INITIAL_ASSET = 1000000; // 초기 자산 (100만 원)
 
@@ -179,6 +180,38 @@ const Rank = () => {
   };
 
   return (
+    <>
+    <div style={{ overflow: "hidden", whiteSpace: "nowrap", position: "relative", height: "300px" }}>
+      <div className="banner">
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+        <img src= {bannerImg} alt="Banner" className="moving-banner" />
+      </div>
+    </div>
     <Grow in={checked} timeout={1000}>
       <Container maxWidth="lg" sx={{ mt: 5 }}>
         {/* 상단 박스 */}
@@ -275,7 +308,7 @@ const Rank = () => {
                       수익률
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell>원화 잔고</TableCell>
+                  {/* <TableCell>원화 잔고</TableCell>
                   <TableCell>비트코인 잔고</TableCell>
                   <TableCell>
                     <TableSortLabel
@@ -285,7 +318,7 @@ const Rank = () => {
                     >
                       총 자산 (원화 환산)
                     </TableSortLabel>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -331,9 +364,9 @@ const Rank = () => {
                             : `${trader.rateOfReturn.toFixed(2)}%`}
                         </Typography>
                       </TableCell>
-                      <TableCell>{trader.krw_balance.toLocaleString()}원</TableCell>
+                      {/* <TableCell>{trader.krw_balance.toLocaleString()}원</TableCell>
                       <TableCell>{trader.btc_balance.toFixed(8)} BTC</TableCell>
-                      <TableCell>{trader.totalAsset.toLocaleString()}원</TableCell>
+                      <TableCell>{trader.totalAsset.toLocaleString()}원</TableCell> */}
                     </TableRow>
                   ))
                 ) : (
@@ -350,6 +383,7 @@ const Rank = () => {
 
       </Container>
     </Grow>
+    </>
   );
 };
 
