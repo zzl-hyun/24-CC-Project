@@ -297,7 +297,7 @@ const Rank = () => {
                       순위
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell>트레이더 이름</TableCell>
+                  <TableCell>유저</TableCell>
                   <TableCell>상태 메시지</TableCell>
                   <TableCell>
                     <TableSortLabel

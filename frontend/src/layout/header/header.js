@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { X, User, Award, Home, ChartSpline } from 'lucide-react';
+import { Bot, X, User, Award, Home, ChartSpline } from 'lucide-react';
 import SignInModal from '../../modal/signInModal';
 import { toast } from 'react-toastify';
 import './header.css';
@@ -34,7 +34,8 @@ const Header = () => {
       <nav className="nav-container">
         <div className="nav-content">
           <div className="logo">
-            <Link to="/" className="logo-link">Trading Bot</Link>
+            
+            <Link to="/" className="logo-link" style={{textDecoration:'none'}}> <Bot size={36} strokeWidth={2.25} /></Link>
           </div>
           <div className="nav-links">
             <Link to="/" className="nav-item">
