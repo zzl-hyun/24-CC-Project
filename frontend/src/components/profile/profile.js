@@ -30,6 +30,8 @@ const theme = createTheme({
 });
 
 const Profile = () => {
+  const INITIAL_ASSET = 1000000; // 초기 자산 (100만 원)
+
   const [name, setName] = useState('');
   const [balance, setBalance] = useState(0); // 초기값 0으로 설정
   const [statusMessage, setStatusMessage] = useState('');
@@ -54,13 +56,25 @@ const Profile = () => {
       }
 
       try {
-        const response = await axios.get(`http://23.23.207.68:4000/user/${currentUser}`);
+        //const response = await axios.get(`http://23.23.207.68:4000/user/${currentUser}`); 주석지우지말것!!!!!!
+        const response = await axios.get(`http://localhost:4000/user/${currentUser}`);
         const data = response.data;
+
+        // 현재 BTC 가격 가져오기
+        const btcResponse = await axios.get('https://api.upbit.com/v1/ticker?markets=KRW-BTC');
+        const btcPrice = btcResponse.data[0].trade_price;
+
+        // 총 잔고 계산 (원화 + BTC 잔고를 원화로 환산)
+        const totalBalance = data.user.krw_balance + data.user.btc_balance * btcPrice;
+
+        // 수익률 계산
+        const rateOfReturn = ((totalBalance - INITIAL_ASSET) / INITIAL_ASSET) * 100;
 
         // 데이터 검증 후 상태 업데이트
         setName(data.user.id || 'Guest');
-        setBalance(data.user.krw_balance || 0);
+        setBalance(totalBalance);
         setStatusMessage(data.user.bio || 'No status message provided');
+        setRateOfReturn(rateOfReturn.toFixed(2));
 
         console.log('Fetched data:', data.user.id); // 디버깅용 로그
       } catch (error) {
@@ -75,12 +89,32 @@ const Profile = () => {
     setOpenPasswordDialog(true);
   };
 
-  const handlePasswordSubmit = () => {
-    // 비밀번호 변경 로직 처리
-    setOpenPasswordDialog(false);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmNewPassword('');
+  const handlePasswordSubmit = async () => {
+    if (newPassword !== confirmNewPassword) {
+      alert('새 비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://localhost:4000/change-password', {
+        id: currentUser,
+        currentPassword,
+        newPassword,
+      });
+
+      if (response.status === 200) {
+        alert('비밀번호가 성공적으로 변경되었습니다.');
+        setOpenPasswordDialog(false);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+      } else {
+        alert('비밀번호 변경에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      alert('비밀번호 변경 중 오류가 발생했습니다.');
+    }
   };
 
   const canSubmitPasswordChange =
@@ -90,15 +124,46 @@ const Profile = () => {
     setOpenWithdrawDialog(true);
   };
 
-  const confirmWithdraw = () => {
-    // 탈퇴 로직 처리
-    setOpenWithdrawDialog(false);
-    setWithdrawConfirmText('');
+  const confirmWithdraw = async () => {
+    if (withdrawConfirmText !== '탈퇴') {
+      alert('탈퇴 확인 문구를 정확히 입력해주세요.');
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://localhost:4000/withdraw', {
+        id: currentUser,
+      });
+
+      if (response.status === 200) {
+        alert('계정이 성공적으로 탈퇴되었습니다.');
+        localStorage.removeItem('currentUser');
+        window.location.href = '/';
+      } else {
+        alert('계정 탈퇴에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error withdrawing account:', error);
+      alert('계정 탈퇴 중 오류가 발생했습니다.');
+    }
   };
 
-  const handleStatusMessageChange = () => {
-    // 상태 메시지 변경 로직 처리
-    alert('상태 메시지가 변경되었습니다.');
+  const handleStatusMessageChange = async () => {
+    try {
+      const response = await axios.post('http://localhost:4000/update-status', {
+        id: currentUser,
+        bio: statusMessage,
+      });
+
+      if (response.status === 200) {
+        alert('상태 메시지가 성공적으로 변경되었습니다.');
+      } else {
+        alert('상태 메시지 변경에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error updating status message:', error);
+      alert('상태 메시지 변경 중 오류가 발생했습니다.');
+    }
   };
 
   const getInitials = (name) => {
@@ -210,6 +275,74 @@ const Profile = () => {
           </Box>
         </Paper>
       </Container>
+
+      {/* 비밀번호 변경 다이얼로그 */}
+      <Dialog open={openPasswordDialog} onClose={() => setOpenPasswordDialog(false)}>
+        <DialogTitle>비밀번호 변경</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="현재 비밀번호"
+            type="password"
+            fullWidth
+            margin="normal"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+          />
+          <TextField
+            label="새 비밀번호"
+            type="password"
+            fullWidth
+            margin="normal"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <TextField
+            label="새 비밀번호 확인"
+            type="password"
+            fullWidth
+            margin="normal"
+            value={confirmNewPassword}
+            onChange={(e) => setConfirmNewPassword(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenPasswordDialog(false)} color="primary">
+            취소
+          </Button>
+          <Button
+            onClick={handlePasswordSubmit}
+            color="primary"
+            disabled={!canSubmitPasswordChange}
+          >
+            변경
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 탈퇴 다이얼로그 */}
+      <Dialog open={openWithdrawDialog} onClose={() => setOpenWithdrawDialog(false)}>
+        <DialogTitle>계정 탈퇴</DialogTitle>
+        <DialogContent>
+          <Typography gutterBottom>
+            계정을 탈퇴하시려면 아래 입력란에 '탈퇴'를 입력해주세요.
+          </Typography>
+          <TextField
+            label="탈퇴 확인"
+            fullWidth
+            margin="normal"
+            value={withdrawConfirmText}
+            onChange={(e) => setWithdrawConfirmText(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenWithdrawDialog(false)} color="primary">
+            취소
+          </Button>
+          <Button onClick={confirmWithdraw} color="secondary">
+            탈퇴
+          </Button>
+        </DialogActions>
+      </Dialog>
     </ThemeProvider>
   );
 };

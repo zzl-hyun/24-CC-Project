@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
 import './rank.css';
 import {
   Container,
@@ -17,41 +18,60 @@ import {
   Avatar,
   TableSortLabel,
   Grow,
+  LinearProgress,
 } from '@mui/material';
 import {
   People as PeopleIcon,
   TrendingUp as TrendingUpIcon,
   AccountBalanceWallet as WalletIcon,
   Person as PersonIcon,
+  AttachMoney as MoneyIcon,
+  SentimentDissatisfied as FearIcon,
 } from '@mui/icons-material';
 import CountUp from 'react-countup';
 
 const Rank = () => {
-  const BTC_PRICE = 50000000; // BTC 가격 (5천만 원)
   const INITIAL_ASSET = 1000000; // 초기 자산 (100만 원)
 
   const [userData, setUserData] = useState([]);
+  const [btcPrice, setBtcPrice] = useState(0);
+  const [fearGreedIndex, setFearGreedIndex] = useState(0);
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('rank');
   const [checked, setChecked] = useState(false);
 
-  // 상단 박스 데이터 (더미 데이터)
-  const totalTraders = 300; // 전체 트레이더 수
-  const activeTrades = 150; // 현재 활성 거래 수
-  const totalVolume = 50000000; // 총 거래량
+  // 상단 박스 데이터
+  const totalTraders = userData.length; // 전체 트레이더 수
+  const currentBtcPrice = btcPrice; // 현재 비트코인 가격
 
   // 데이터 가져오기
   useEffect(() => {
+    const fetchBtcPrice = async () => {
+      try {
+        const response = await axios.get('https://api.upbit.com/v1/ticker?markets=KRW-BTC');
+        const price = response.data[0].trade_price;
+        setBtcPrice(price);
+      } catch (error) {
+        console.error('Error fetching BTC price:', error);
+      }
+    };
+
+    const fetchFearGreedIndex = async () => {
+      try {
+        const response = await axios.get('https://api.alternative.me/fng/?limit=1');
+        const index = response.data.data[0].value;
+        setFearGreedIndex(index);
+      } catch (error) {
+        console.error('Error fetching Fear and Greed Index:', error);
+      }
+    };
+
     const fetchData = async () => {
       try {
-        // const response = await fetch('http://23.23.207.68:4000/users');
         const response = await fetch('http://localhost:4000/users');
-
         const data = await response.json();
-        console.log('Fetched data:', data); // 디버깅용 로그
         if (Array.isArray(data.users)) {
           setUserData(data.users);
-          console.log('User data set:', data.users); // 디버깅용 로그
         } else {
           console.error('Invalid API response structure:', data);
         }
@@ -61,8 +81,34 @@ const Rank = () => {
     };
 
     setChecked(true);
+    fetchBtcPrice();
+    fetchFearGreedIndex();
     fetchData();
+
+    // BTC 가격을 10초마다 새로고침
+    const intervalId = setInterval(fetchBtcPrice, 10000);
+
+    return () => clearInterval(intervalId);
   }, []);
+
+  // 비트코인 가격이 변경될 때마다 유저 데이터 다시 가져오기
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('http://localhost:4000/users');
+        const data = await response.json();
+        if (Array.isArray(data.users)) {
+          setUserData(data.users);
+        } else {
+          console.error('Invalid API response structure:', data);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchData();
+  }, [btcPrice]);
 
   // 정렬 핸들러
   const handleRequestSort = (property) => {
@@ -74,7 +120,7 @@ const Rank = () => {
   // 수익률 계산 및 정렬된 데이터 생성
   const sortedData = useMemo(() => {
     const calculatedData = userData.map((user) => {
-      const totalAsset = user.krw_balance + user.btc_balance * BTC_PRICE;
+      const totalAsset = user.krw_balance + user.btc_balance * btcPrice;
       const rateOfReturn = ((totalAsset - INITIAL_ASSET) / INITIAL_ASSET) * 100;
       return {
         ...user,
@@ -88,7 +134,7 @@ const Rank = () => {
 
     // 순위 추가
     return sorted.map((item, index) => ({ ...item, rank: index + 1 }));
-  }, [userData]);
+  }, [userData, btcPrice]);
 
   // 표시할 데이터 정렬
   const displayedData = useMemo(() => {
@@ -122,6 +168,14 @@ const Rank = () => {
     }
   };
 
+  // 공포 및 탐욕 지수 상태 반환 함수
+  const getFearGreedState = (index) => {
+    if (index <= 25) return '공포';
+    if (index <= 50) return '중립';
+    if (index <= 75) return '탐욕';
+    return '극단적 탐욕';
+  };
+
   return (
     <Grow in={checked} timeout={1000}>
       <Container maxWidth="lg" sx={{ mt: 5 }}>
@@ -134,7 +188,7 @@ const Rank = () => {
                   <PeopleIcon color="primary" sx={{ fontSize: 40, mr: 2 }} />
                   <Box>
                     <Typography variant="h6" color="textSecondary">
-                      전체 트레이더 수
+                      전체 회원 수
                     </Typography>
                     <Typography variant="h4">
                       <CountUp end={totalTraders} duration={2} />명
@@ -149,13 +203,13 @@ const Rank = () => {
             <Card elevation={3} className="card">
               <CardContent className="card-content">
                 <Box display="flex" alignItems="center">
-                  <TrendingUpIcon color="success" sx={{ fontSize: 40, mr: 2 }} />
+                  <MoneyIcon color="success" sx={{ fontSize: 40, mr: 2 }} />
                   <Box>
                     <Typography variant="h6" color="textSecondary">
-                      현재 활성 거래
+                      현재 비트코인 가격
                     </Typography>
                     <Typography variant="h4">
-                      <CountUp end={activeTrades} duration={2} />건
+                      <CountUp end={currentBtcPrice} duration={2} separator="," />원
                     </Typography>
                   </Box>
                 </Box>
@@ -167,13 +221,21 @@ const Rank = () => {
             <Card elevation={3} className="card">
               <CardContent className="card-content">
                 <Box display="flex" alignItems="center">
-                  <WalletIcon color="secondary" sx={{ fontSize: 40, mr: 2 }} />
+                  <FearIcon color="secondary" sx={{ fontSize: 40, mr: 2 }} />
                   <Box>
                     <Typography variant="h6" color="textSecondary">
-                      총 거래량
+                      공포 및 탐욕 지수
                     </Typography>
                     <Typography variant="h4">
-                      <CountUp end={totalVolume} duration={2} separator="," />원
+                      <CountUp end={fearGreedIndex} duration={2} />점
+                    </Typography>
+                    <LinearProgress
+                      variant="determinate"
+                      value={fearGreedIndex}
+                      sx={{ height: 10, borderRadius: 5, mt: 1 }}
+                    />
+                    <Typography variant="body2" color="textSecondary">
+                      {getFearGreedState(fearGreedIndex)}
                     </Typography>
                   </Box>
                 </Box>
@@ -213,6 +275,15 @@ const Rank = () => {
                   </TableCell>
                   <TableCell>원화 잔고</TableCell>
                   <TableCell>비트코인 잔고</TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={orderBy === 'totalAsset'}
+                      direction={orderBy === 'totalAsset' ? order : 'asc'}
+                      onClick={() => handleRequestSort('totalAsset')}
+                    >
+                      총 자산 (원화 환산)
+                    </TableSortLabel>
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -259,12 +330,13 @@ const Rank = () => {
                         </Typography>
                       </TableCell>
                       <TableCell>{trader.krw_balance.toLocaleString()}원</TableCell>
-                      <TableCell>{trader.btc_balance.toFixed(4)} BTC</TableCell>
+                      <TableCell>{trader.btc_balance.toFixed(8)} BTC</TableCell>
+                      <TableCell>{trader.totalAsset.toLocaleString()}원</TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={7} align="center">
                       데이터가 없습니다.
                     </TableCell>
                   </TableRow>

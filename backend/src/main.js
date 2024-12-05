@@ -105,7 +105,6 @@ app.get('/users', (req, res) => {
   });
 });
 
-
 // 구매/판매 API
 app.post('/trade', async (req, res) => {
   const { userId, type, amount } = req.body; // amount는 KRW 단위
@@ -216,7 +215,53 @@ app.get('/transactions/:userId', (req, res) => {
   });
 });
 
+// 비밀번호 변경 API
+app.post('/change-password', (req, res) => {
+  const { id, currentPassword, newPassword } = req.body;
+  const sql = `SELECT * FROM users WHERE id = ? AND password = ?`;
+  db.get(sql, [id, currentPassword], (err, row) => {
+    if (err) {
+      res.status(500).json({ error: 'Internal server error.' });
+    } else if (row) {
+      const updateSql = `UPDATE users SET password = ? WHERE id = ?`;
+      db.run(updateSql, [newPassword, id], function (err) {
+        if (err) {
+          res.status(500).json({ error: 'Failed to update password.' });
+        } else {
+          res.status(200).json({ message: 'Password updated successfully!' });
+        }
+      });
+    } else {
+      res.status(400).json({ error: 'Invalid current password.' });
+    }
+  });
+});
 
+// 계정 탈퇴 API
+app.post('/withdraw', (req, res) => {
+  const { id } = req.body;
+  const sql = `DELETE FROM users WHERE id = ?`;
+  db.run(sql, [id], function (err) {
+    if (err) {
+      res.status(500).json({ error: 'Failed to delete account.' });
+    } else {
+      res.status(200).json({ message: 'Account deleted successfully!' });
+    }
+  });
+});
+
+// 상태 메시지 업데이트 API
+app.post('/update-status', (req, res) => {
+  const { id, bio } = req.body;
+  const sql = `UPDATE users SET bio = ? WHERE id = ?`;
+  db.run(sql, [bio, id], function (err) {
+    if (err) {
+      res.status(500).json({ error: 'Failed to update status message.' });
+    } else {
+      res.status(200).json({ message: 'Status message updated successfully!' });
+    }
+  });
+});
 
 // 서버 시작
 app.listen(PORT, () => {
