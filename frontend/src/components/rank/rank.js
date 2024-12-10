@@ -37,8 +37,11 @@ const Rank = () => {
   const INITIAL_ASSET = 1000000; // 초기 자산 (100만 원)
 
   const [userData, setUserData] = useState([]);
-  const [btcPrice, setBtcPrice] = useState(0);
-  const [fearGreedIndex, setFearGreedIndex] = useState(0);
+  const storedBtcPrice = localStorage.getItem('btc');
+  const [btcPrice, setBtcPrice] = useState(storedBtcPrice ? Number(storedBtcPrice) : null);
+  const storedFearIndex = localStorage.getItem('fear');
+  const [fearGreedIndex, setFearGreedIndex] = useState(storedFearIndex ? Number(storedFearIndex) : null);
+  
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('rank');
   const [checked, setChecked] = useState(false);
@@ -49,32 +52,24 @@ const Rank = () => {
 
   // 데이터 가져오기
   useEffect(() => {
-    // btc 시세 동기화
-    const fetchBtcPrice = async () => {
-      try {
-        setBtcPrice(localStorage.getItem('btc'));
-        if(!btcPrice){
-            const response = await axios.get('https://api.upbit.com/v1/ticker?markets=KRW-BTC');
-            const price = response.data[0].trade_price;
-            setBtcPrice(price);
-            localStorage.getItem('btc', btcPrice);
-        }
-      } catch (error) {
-        console.error('Error fetching BTC price:', error);
-      }
-    };
-
-
     const fetchFearGreedIndex = async () => {
+      if(fearGreedIndex !== null) return;
       try {
         const response = await axios.get('https://api.alternative.me/fng/?limit=1');
         const index = response.data.data[0].value;
+        localStorage.setItem('fear', index);
         setFearGreedIndex(index);
       } catch (error) {
         console.error('Error fetching Fear and Greed Index:', error);
       }
     };
 
+    setChecked(true);
+    fetchFearGreedIndex();
+  }, []);
+
+  // 10마다 유저 데이터 다시 가져오기
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/users`);
@@ -88,33 +83,13 @@ const Rank = () => {
         console.error('Error fetching user data:', error);
       }
     };
-    if (!btcPrice){
-      fetchBtcPrice();
-    }
-    setChecked(true);
-    fetchFearGreedIndex();
-    fetchData();
 
+    const intervalId = setInterval(() => {
+      fetchData();
+    }, 10000);
+
+    return () => clearInterval(intervalId);
   }, []);
-
-  // 비트코인 가격이 변경될 때마다 유저 데이터 다시 가져오기
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const response = await fetch(`${API_BASE_URL}/users`);
-  //       const data = await response.json();
-  //       if (Array.isArray(data.users)) {
-  //         setUserData(data.users);
-  //       } else {
-  //         console.error('Invalid API response structure:', data);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching user data:', error);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, [btcPrice]);
 
   // 정렬 핸들러
   const handleRequestSort = (property) => {

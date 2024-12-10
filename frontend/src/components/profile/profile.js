@@ -23,7 +23,7 @@ import {
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:4000'; // API 기본 URL
+const API_BASE_URL = 'http://113.198.66.75:10232'; // API 기본 URL
 
 const theme = createTheme({
   typography: {
