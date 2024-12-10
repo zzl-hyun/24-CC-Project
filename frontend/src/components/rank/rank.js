@@ -84,6 +84,8 @@ const Rank = () => {
       }
     };
 
+    fetchData();
+    
     const intervalId = setInterval(() => {
       fetchData();
     }, 10000);
