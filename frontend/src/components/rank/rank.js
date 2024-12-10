@@ -31,7 +31,7 @@ import {
 import CountUp from 'react-countup';
 import bannerImg from '../../asset/banner.png';
 
-const API_BASE_URL = 'http://localhost:4000'; // API 기본 URL
+const API_BASE_URL = 'http://113.198.66.75:10232'; // API 기본 URL
 const backgroundImageUrl = '../../public/banner.png'
 const Rank = () => {
   const INITIAL_ASSET = 1000000; // 초기 자산 (100만 원)

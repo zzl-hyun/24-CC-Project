@@ -35,7 +35,7 @@ const Order = () => {
       }
 
       try {
-        const response = await axios.get(`http://localhost:4000/user/${currentUser}`);
+        const response = await axios.get(`http://113.198.66.75:10232/user/${currentUser}`);
         const data = response.data;
 
         setName(data.user.id || "Guest");
@@ -84,7 +84,7 @@ const Order = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:4000/trade", {
+      const response = await axios.post("http://113.198.66.75:10232/trade", {
         userId: currentUser,
         type,
         amount: normalizedAmount, // 쉼표 제거 후 숫자로 변환된 금액 전달
@@ -124,7 +124,7 @@ const Order = () => {
   useEffect(() => {
     const fetchTransactions = async () => {
         try {
-        const response = await axios.get(`http://localhost:4000/transactions/${currentUser}`);
+        const response = await axios.get(`http://113.198.66.75:10232/transactions/${currentUser}`);
         const txs = response.data.transactions || [];
       setTransactions(txs);
 

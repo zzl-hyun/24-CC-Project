@@ -23,7 +23,7 @@ import {
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:4000'; // API 기본 URL
+const API_BASE_URL = 'http://113.198.66.75:10232'; // API 기본 URL
 
 const theme = createTheme({
   typography: {
@@ -63,7 +63,9 @@ const Profile = () => {
         const data = response.data;
 
         // 현재 BTC 가격 가져오기
-        const btcResponse = await axios.get('https://api.upbit.com/v1/ticker?markets=KRW-BTC');
+        // const btcResponse = await axios.get('https://api.upbit.com/v1/ticker?markets=KRW-BTC');
+        const btcResponse = localStorage.getItem('btc');
+        
         const btcPrice = btcResponse.data[0].trade_price;
 
         // 총 잔고 계산 (원화 + BTC 잔고를 원화로 환산)

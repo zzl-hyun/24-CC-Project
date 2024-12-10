@@ -5,7 +5,7 @@ const axios = require('axios');
 const cors = require('cors'); // Import the cors package
 
 const app = express();
-const PORT = 4000;
+const PORT = 8080;
 const DB_PATH = 'database.db';
 
 // Enable CORS for all routes
