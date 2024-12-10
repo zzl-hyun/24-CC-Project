@@ -17,6 +17,7 @@ const Order = () => {
   const totalValue = balance + btcBalance * price;
   // 사용자 데이터 가져오기
 
+  // 로그인했는지 체크
   useEffect(() => {
     const interval = setInterval(() => {
       const authStatus = localStorage.getItem("isAuthenticated") === "true";
@@ -25,7 +26,7 @@ const Order = () => {
     return () => clearInterval(interval);
   }, []);
 
-
+  // fetch user정보
   useEffect(() => {
     const fetchUserData = async () => {
 
@@ -56,7 +57,9 @@ const Order = () => {
         const response = await axios.get("https://api.upbit.com/v1/ticker", {
           params: { markets: "KRW-BTC" },
         });
-        setPrice(response.data[0].trade_price); // 현재 비트코인 시세
+        let price = response.data[0].trade_price;
+        setPrice(price);; // 현재 비트코인 시세
+        localStorage.setItem('btc', price)
       } catch (error) {
         console.error("Error fetching Bitcoin price:", error);
       }
@@ -112,6 +115,7 @@ const Order = () => {
   const calculateProfitRate = (currentPrice, averagePrice) => {
     return averagePrice > 0 ? ((totalValue - 1000000) / 1000000) * 100 : 0;
   };
+  
   useEffect(() => {
     if (transactions.length > 0) {
       const avgPrice = calculateAverageBuyPrice(transactions);

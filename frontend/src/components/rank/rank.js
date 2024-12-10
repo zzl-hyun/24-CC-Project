@@ -49,15 +49,21 @@ const Rank = () => {
 
   // 데이터 가져오기
   useEffect(() => {
+    // btc 시세 동기화
     const fetchBtcPrice = async () => {
       try {
-        const response = await axios.get('https://api.upbit.com/v1/ticker?markets=KRW-BTC');
-        const price = response.data[0].trade_price;
-        setBtcPrice(price);
+        setBtcPrice(localStorage.getItem('btc'));
+        if(!btcPrice){
+            const response = await axios.get('https://api.upbit.com/v1/ticker?markets=KRW-BTC');
+            const price = response.data[0].trade_price;
+            setBtcPrice(price);
+            localStorage.getItem('btc', btcPrice);
+        }
       } catch (error) {
         console.error('Error fetching BTC price:', error);
       }
     };
+
 
     const fetchFearGreedIndex = async () => {
       try {
@@ -82,36 +88,33 @@ const Rank = () => {
         console.error('Error fetching user data:', error);
       }
     };
-
+    if (!btcPrice){
+      fetchBtcPrice();
+    }
     setChecked(true);
-    fetchBtcPrice();
     fetchFearGreedIndex();
     fetchData();
 
-    // BTC 가격을 10초마다 새로고침
-    const intervalId = setInterval(fetchBtcPrice, 10000);
-
-    return () => clearInterval(intervalId);
   }, []);
 
   // 비트코인 가격이 변경될 때마다 유저 데이터 다시 가져오기
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/users`);
-        const data = await response.json();
-        if (Array.isArray(data.users)) {
-          setUserData(data.users);
-        } else {
-          console.error('Invalid API response structure:', data);
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const response = await fetch(`${API_BASE_URL}/users`);
+  //       const data = await response.json();
+  //       if (Array.isArray(data.users)) {
+  //         setUserData(data.users);
+  //       } else {
+  //         console.error('Invalid API response structure:', data);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching user data:', error);
+  //     }
+  //   };
 
-    fetchData();
-  }, [btcPrice]);
+  //   fetchData();
+  // }, [btcPrice]);
 
   // 정렬 핸들러
   const handleRequestSort = (property) => {

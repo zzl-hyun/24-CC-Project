@@ -23,9 +23,25 @@ const HomeMain = () => {
                 setLoading(false);
             }
         };
-
         fetchData();
     }, []);
+
+    useEffect(() => {
+        const fetchBtcPrice = async () => {
+            try {
+              let btcPrice = localStorage.getItem('btc');
+              if(!btcPrice){
+                  const response = await axios.get('https://api.upbit.com/v1/ticker?markets=KRW-BTC');
+                  const price = response.data[0].trade_price;
+                  btcPrice = price;
+                  localStorage.setItem('btc', btcPrice);
+              }
+            } catch (error) {
+              console.error('Error fetching BTC price:', error);
+            }
+          };
+          fetchBtcPrice();
+    });
 
 
     // if (loading) return <div>Loading...</div>;
