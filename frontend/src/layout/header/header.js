@@ -42,13 +42,13 @@ const Header = () => {
               <Home size={20} />
               <span>Home</span>
             </Link>
-            <Link to="/trade" className="nav-item">
-              <ChartSpline size={20} />
-              <span>Trade</span>
-            </Link>
             <Link to="/rank" className="nav-item">
               <Award size={20} />
               <span>Rank</span>
+            </Link>
+            <Link to="/trade" className="nav-item">
+              <ChartSpline size={20} />
+              <span>Trade</span>
             </Link>
             <Link to="/profile" className="nav-item">
               <User size={20} />

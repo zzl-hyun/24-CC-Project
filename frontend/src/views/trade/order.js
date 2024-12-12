@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styled, {keyframes} from "styled-components";
-
+import { fetchUserData } from "../../api/api";
 const Order = () => {
   const [name, setName] = useState("");
   const [balance, setBalance] = useState(0);
@@ -28,27 +28,25 @@ const Order = () => {
 
   // fetch user정보
   useEffect(() => {
-    const fetchUserData = async () => {
-
+    const fetchUserDataEffect = async () => {
       if (!currentUser) {
         console.warn("No currentUser found in localStorage");
         return;
       }
-
       try {
-        const response = await axios.get(`http://113.198.66.75:10232/user/${currentUser}`);
-        const data = response.data;
-
-        setName(data.user.id || "Guest");
-        setBalance(data.user.krw_balance || 0);
-        setBtcBalance(data.user.btc_balance || 0);
+        const user = await fetchUserData(currentUser);
+  
+        setName(user?.id || "Guest");
+        setBalance(user?.krw_balance || 0);
+        setBtcBalance(user?.btc_balance || 0);
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
     };
-
-    fetchUserData();
+  
+    fetchUserDataEffect();
   }, [currentUser]);
+  
 
   // 비트코인 시세 가져오기
   useEffect(() => {
@@ -163,19 +161,21 @@ const Order = () => {
           <InfoRow>보유 KRW: {balance.toLocaleString()} KRW</InfoRow>
           <InfoRow>보유 BTC: {btcBalance.toFixed(8)} BTC</InfoRow>
           <InfoRow>
-    수익률: 
-    {averageBuyPrice && price ? 
-      `${calculateProfitRate(price, averageBuyPrice).toFixed(2)}%` 
-      : "N/A"}
-  </InfoRow>
-  <InfoRow>
-    평단가: {averageBuyPrice > 0 ? `${averageBuyPrice.toLocaleString()} KRW` : "N/A"}
-  </InfoRow>
+            수익률: 
+            <span style={{color: calculateProfitRate(price, averageBuyPrice) > 0 ? "green" : "red"}}>
+              {averageBuyPrice && price ? 
+                `${calculateProfitRate(price, averageBuyPrice).toFixed(2)}%` 
+                : "N/A"}
+            </span>
+          </InfoRow>
+          <InfoRow>
+            평단가: {averageBuyPrice > 0 ? `${averageBuyPrice.toLocaleString()} KRW` : "N/A"}
+          </InfoRow>
         </InfoContainer>
 
         <ButtonContainer>
           <InfoRow style={{ color: "green" }}>시장가로 주문하기</InfoRow>
-          <InfoRow style={{ color: "gray", fontSize: "10px" }}>수수료 : 0.01%</InfoRow>
+          <InfoRow style={{ color: "gray", fontSize: "20px" }}>수수료 : 0.01%</InfoRow>
       
           <Input
             type="text"

@@ -30,9 +30,8 @@ import {
 } from '@mui/icons-material';
 import CountUp from 'react-countup';
 import bannerImg from '../../asset/banner.png';
+import { fetchFearGreedIndex, fetchUsersData } from '../../api/api'; // api.js에서 가져오기
 
-const API_BASE_URL = 'http://113.198.66.75:10232'; // API 기본 URL
-const backgroundImageUrl = '../../public/banner.png'
 const Rank = () => {
   const INITIAL_ASSET = 1000000; // 초기 자산 (100만 원)
 
@@ -52,35 +51,29 @@ const Rank = () => {
 
   // 데이터 가져오기
   useEffect(() => {
-    const fetchFearGreedIndex = async () => {
-      if(fearGreedIndex !== null) return;
+    const fetchFearIndex = async () => {
+      if (fearGreedIndex !== null) return;
       try {
-        const response = await axios.get('https://api.alternative.me/fng/?limit=1');
-        const index = response.data.data[0].value;
+        const index = await fetchFearGreedIndex();
         localStorage.setItem('fear', index);
         setFearGreedIndex(index);
       } catch (error) {
-        console.error('Error fetching Fear and Greed Index:', error);
+        console.error(error);
       }
     };
 
     setChecked(true);
-    fetchFearGreedIndex();
-  }, []);
+    fetchFearIndex();
+  }, [fearGreedIndex]);
 
   // 10마다 유저 데이터 다시 가져오기
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/users`);
-        const data = await response.json();
-        if (Array.isArray(data.users)) {
-          setUserData(data.users);
-        } else {
-          console.error('Invalid API response structure:', data);
-        }
+        const users = await fetchUsersData();
+        setUserData(users);
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error(error);
       }
     };
 

@@ -10,7 +10,6 @@ const DB_PATH = 'database.db';
 
 // Enable CORS for all routes
 app.use(cors());
-
 // 데이터베이스 연결
 const db = new sqlite3.Database(DB_PATH, (err) => {
   if (err) console.error('Error opening database:', err.message);
